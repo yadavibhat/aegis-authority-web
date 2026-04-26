@@ -37,8 +37,9 @@ export default function TouristScreen() {
             // Hardcoded to fetch history uniquely associated with this device/profile.
             // Note: In real app, associate this with the user's clerk_user_id.
             try {
-                const { data } = await supabaseBrowser.from('alerts').select('*').order('created_at', { ascending: false }).limit(6);
-                if (data) setHistory(data);
+                const res = await fetch('/api/admin/alerts');
+                const data = await res.json();
+                if (res.ok && data) setHistory(data.slice(0, 6));
             } catch(e) {}
         };
         fetchHistory();

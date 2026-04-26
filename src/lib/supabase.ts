@@ -1,26 +1,10 @@
 // Mock Database Store
 const mockDb: any = {
-    alerts: [
-        { id: '1', tourist_id: '101', status: 'OPEN', type: 'Critical SOS', latitude: 28.5234, longitude: 77.1232, created_at: '2026-04-25T14:42:10Z' },
-        { id: '2', tourist_id: '102', status: 'OPEN', type: 'Zone Breach', zone_id: 'z1', created_at: '2026-04-25T14:38:55Z' },
-        { id: '3', tourist_id: '103', status: 'RESOLVED', type: 'Health Warning', created_at: '2026-04-25T14:35:12Z' },
-    ],
-    tourists: [
-        { id: '101', name: 'M. CHAUHAN', aadhaar: '123456788821', phone: '9876543210', active: true },
-        { id: '102', name: 'J. DOE', aadhaar: '876543219021', phone: '9876543222', active: true },
-        { id: '103', name: 'K. SHARMA', aadhaar: '111122221109', phone: '9876543333', active: true },
-        { id: '104', name: 'R. SINGH', aadhaar: '111122224421', phone: '9876543444', active: true },
-    ],
-    zones: [
-        { id: 'z1', name: 'RED-FORBIDDEN', active: true },
-        { id: 'z2', name: 'SECURE SECTOR 4', active: true },
-    ],
-    locations: [
-        { id: 'l1', tourist_id: '101', lat: 28.5234, lng: 77.1232, created_at: '2026-04-25T14:40:00Z' },
-    ],
-    devices: [
-        { device_id: 'W-92', tourist_id: '104', battery: 15, status: 'Active' }
-    ]
+    alerts: [],
+    tourists: [],
+    zones: [],
+    locations: [],
+    devices: []
 };
 
 // Simulated Supabase Client
