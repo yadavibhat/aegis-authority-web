@@ -13,7 +13,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dev
             const { data: newTourist } = await supabase.from('tourists').insert({
                 aadhaar: '3456-7890-1234', device_id: deviceId, name: 'DEMO TOURIST', active: true, lat: 28.6149, lng: 77.2100
             }).select('*');
-            tourist = newTourist[0];
+            if (newTourist && newTourist.length > 0) {
+                tourist = newTourist[0];
+            } else {
+                return NextResponse.json({ error: "Hardware ID not paired, stateless creation failed" }, { status: 404 });
+            }
         }
 
         // Insert new emergency alert for the dashboard to scoop up!
