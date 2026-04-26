@@ -51,12 +51,13 @@ export const supabase = {
                 return promise as any;
             },
             insert: (body: any) => {
-                const newItem = { id: Math.random().toString(), ...body, created_at: new Date().toISOString() };
+                const records = Array.isArray(body) ? body : [body];
+                const newItems = records.map((record: any) => ({ id: Math.random().toString(), ...record, created_at: new Date().toISOString() }));
                 if (mockDb[table]) {
-                    mockDb[table].push(newItem);
+                    mockDb[table].push(...newItems);
                 }
                 const chain: any = {
-                    select: () => Promise.resolve({ data: [newItem], error: null }) as any
+                    select: () => Promise.resolve({ data: newItems, error: null }) as any
                 };
                 return chain as any;
             },
