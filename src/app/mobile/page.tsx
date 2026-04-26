@@ -102,7 +102,7 @@ export default function MobileScreen() {
 <span className="text-sm font-bold text-[#9ca3af]">OR</span>
 <div className="flex-grow border-b border-gray-200"></div>
 </div>
-<button onClick={() => router.push('/wearable/AEGIS_BAND_01')} type="button" className="w-full rounded-[6px] h-14 bg-white border border-slate-300 shadow-sm flex items-center justify-center space-x-3 text-slate-700 font-semibold hover:bg-slate-50 active:bg-slate-100 transition-colors">
+<button onClick={async () => { await fetch('/api/wearable/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aadhaar: '3456-7890-1234', device_id: 'AEGIS_BAND_01', name: 'DEMO TOURIST', active: true, lat: 28.6149, lng: 77.2100 }) }); router.push('/wearable/AEGIS_BAND_01'); }} type="button" className="w-full rounded-[6px] h-14 bg-white border border-slate-300 shadow-sm flex items-center justify-center space-x-3 text-slate-700 font-semibold hover:bg-slate-50 active:bg-slate-100 transition-colors">
                         <img alt="Parichay Logo" className="h-12" data-alt="Small Indian flag representing the Parichay SSO authentication system" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNK7dLMitQASE00LFDohWF0W66gcEygDqK9ez0uvpcHiVVDC0uTjCuuq-LY3sti6a7H9m0Js7zOomNpUx_wsGFuJLCof5vJw6JHwUWCbJlkJb5vszxSBgEyR-SglK8PhF0Z1vTVxKunBtfopIQ5nvAAQzm0Zdv_p-xjvnyJDfV7oCzrp8NFkQlS1sLYq2RPADZBpYE3Lqiy38FB7bOEquYCT-3CTCb979WBhB6FKRVlfu9tWrtTniWX26J09vSsAfTAEik-xLtviHb"/>
                         <div className="h-5 w-px bg-slate-300"></div>
                         <span>Sign in with Parichay SSO</span>
