@@ -173,7 +173,6 @@ export default function AuthorityScreen() {
     </div>
     <div className="mt-auto p-5 border-t border-slate-100 bg-slate-50 shrink-0">
         <div className="flex items-center gap-10">
-            <img alt="Officer Portrait" className="w-10 h-10 shrink-0 rounded-[6px] border border-slate-300 object-cover grayscale brightness-90 shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtcr3EGG25zH4v0pxsWACHzO51r7-PyOabB6pD1WBdxIeMwc_YHlOK7edOtikURVHzHDWVl3Sw0mlCc74_6KiyGsQod0s1Yu9AgFn4EV9t8DKBOVowH-TyZ_9TPzQLi8HAnyWAsVbwC-qLyHwnYmSHbgqt-ttuP4WNhyyZMZEt5UtsKzDwFq0Zb4AuFdBKDftmuDMB8tJIOlAlLyD5RHYiQH1XE4K-LfIAnlWMkoXG8SCRI4YTlCOq3pdOMcCUwAKtT8eSWrsyBTSs"/>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="w-2 h-2 shrink-0 rounded-full bg-emerald-500"></span>

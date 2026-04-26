@@ -161,7 +161,7 @@ export default function LoginScreen() {
                             <div className="flex-grow border-b border-gray-200"></div>
                         </div>
                         
-                        <button className="rounded-[6px] w-full h-12 bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center justify-center space-x-3" type="button">
+                        <button onClick={() => { setUsername('admin123'); setPassword('password'); setTimeout(() => router.push('/authority'), 100); }} className="rounded-[6px] w-full h-12 bg-white border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center justify-center space-x-3" type="button">
                             <div className="w-5 h-5 flex items-center justify-center">
                                 <img alt="Parichay Logo" className="h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNK7dLMitQASE00LFDohWF0W66gcEygDqK9ez0uvpcHiVVDC0uTjCuuq-LY3sti6a7H9m0Js7zOomNpUx_wsGFuJLCof5vJw6JHwUWCbJlkJb5vszxSBgEyR-SglK8PhF0Z1vTVxKunBtfopIQ5nvAAQzm0Zdv_p-xjvnyJDfV7oCzrp8NFkQlS1sLYq2RPADZBpYE3Lqiy38FB7bOEquYCT-3CTCb979WBhB6FKRVlfu9tWrtTniWX26J09vSsAfTAEik-xLtviHb"/>
                             </div>
