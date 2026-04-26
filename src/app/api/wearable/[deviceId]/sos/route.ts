@@ -5,15 +5,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dev
     try {
         // Resolve associated tourist via simulated DB logic
         const { deviceId } = await params;
-        const { data: device, error: devError } = await supabase.from('devices').select('*').eq('device_id', deviceId).single();
+        const { data: tourist, error: tourError } = await supabase.from('tourists').select('*').eq('device_id', deviceId).single();
         
-        if (devError || !device) {
-            return NextResponse.json({ error: "Device hardware not registered" }, { status: 404 });
+        if (tourError || !tourist) {
+            return NextResponse.json({ error: "Hardware ID not paired to any active subject" }, { status: 404 });
         }
 
         // Insert new emergency alert for the dashboard to scoop up!
         await supabase.from('alerts').insert({
-            tourist_id: device.tourist_id,
+            tourist_id: tourist.id,
             status: 'OPEN',
             type: 'WEARABLE MOCK SOS',
             latitude: 28.6149,

@@ -152,49 +152,46 @@ export default function TouristScreen() {
                         <div className="flex items-start justify-between max-w-6xl mx-auto">
                             <div className="flex items-center gap-12">
                                 <div className="relative">
-                                    <img className="w-24 h-24 rounded-full border border-slate-300 blur-[2px] object-cover grayscale shadow-sm" alt="Blurred Portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQo-OICCZY9Yi1yIbpSHcQZSqmkczWu856US5qgWxb-JEOSblUA6F3re8dsKOXY0x-sN3LcRvvtQNmFnoJ6foU5wR0egh0oX517I-v6QP5A-kAr8S3FpcHYO1oSZJQskSLwJfX2sI4T0dl-vcroRs6DO870nBvCR-dXYYrBKuLTmyqyQxJymC7Ns1VmAi_WU6aphcVPMt-VKj7e1Su0FremWMWhiMoBJjoqfGiM1Qoc1rxSibnd61kY__BK2qQxuuQppD40wZ5QBnE" />
-                                    <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-full border-4 border-white shadow-sm">
-                                        <CheckCircle size={16} />
+                                    <div className="w-24 h-24 rounded-full border border-slate-300 bg-slate-100 flex items-center justify-center shadow-sm">
+                                        <Users className="text-slate-400" size={40} />
+                                    </div>
+                                    <div className="absolute -bottom-2 -right-2 bg-slate-400 text-white p-2 rounded-full border-4 border-white shadow-sm">
+                                        <Clock size={16} />
                                     </div>
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-12 mb-3">
-                                        <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Unregistered Subject</h1>
+                                        <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Awaiting Wearable Link</h1>
                                         <div className="flex items-center gap-2">
-                                            <span className="px-2.5 py-1 border border-emerald-500 text-emerald-700 bg-emerald-50 text-[10px] uppercase font-bold tracking-wider rounded-sm shadow-sm">
-                                                Risk Factor: LOW
+                                            <span className="px-2.5 py-1 border border-slate-400 text-slate-600 bg-slate-50 text-[10px] uppercase font-bold tracking-wider rounded-sm shadow-sm">
+                                                Risk Factor: Unknown
                                             </span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-10 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
-                                        <div className="flex items-center gap-1.5"><Calendar size={14} /> 20 Apr - 30 Apr</div>
-                                        <div className="flex items-center gap-1.5"><MapPin size={14} /> District-7 Central</div>
-                                        <div className="flex items-center gap-1.5"><Shield size={14} /> Auth: 18 Apr</div>
+                                        <div className="flex items-center gap-1.5"><Calendar size={14} /> TBD</div>
+                                        <div className="flex items-center gap-1.5"><MapPin size={14} /> Locating...</div>
+                                        <div className="flex items-center gap-1.5"><Shield size={14} /> Pending Auth</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <a 
-                                href="/wearable/AEGIS_BAND_01"
-                                className="border border-emerald-500 bg-emerald-50 rounded-lg p-12 flex items-center justify-between gap-12 shadow-sm min-w-[240px] cursor-pointer hover:bg-emerald-100/50 transition-colors group"
-                                style={{ textDecoration: 'none' }}
-                                title="Open Live Wearable Stream">
+                            <div 
+                                className="border border-slate-300 bg-white rounded-lg p-12 flex items-center justify-between gap-12 shadow-sm min-w-[240px]"
+                                >
                                 <div className="flex items-center gap-12">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-200 transition-colors">
-                                        <Watch className="text-emerald-600" size={20} />
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                        <Watch className="text-slate-400" size={20} />
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-emerald-700 font-black text-[11px] uppercase tracking-widest">AEGIS_BAND_01 SYNCED</span>
+                                        <span className="text-slate-500 font-black text-[11px] uppercase tracking-widest">NO DEVICE LINKED</span>
                                         <div className="flex items-center gap-1.5 mt-1">
-                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                            <span className="text-[10px] text-emerald-600 font-mono font-bold">ACTIVE STREAM</span>
+                                            <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                                            <span className="text-[10px] text-slate-400 font-mono font-bold">OFFLINE</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs">
-                                    Open ↗
-                                </div>
-                            </a>
+                            </div>
                         </div>
                     </div>
 
