@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export async function POST(req: NextRequest, { params }: { params: { deviceId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
     try {
         // Resolve associated tourist via simulated DB logic
-        const { deviceId } = params;
+        const { deviceId } = await params;
         const { data: device, error: devError } = await supabase.from('devices').select('*').eq('device_id', deviceId).single();
         
         if (devError || !device) {

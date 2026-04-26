@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
         await checkRole();
         const { data: alerts } = await supabase.from('alerts').select('*, tourist:tourists(*)');
         if (alerts) {
-            alerts.forEach(a => {
+            alerts.forEach((a: any) => {
                 if (a.tourist) { 
                     if (Array.isArray(a.tourist)) {
                         a.tourist = a.tourist.map(maskData);
