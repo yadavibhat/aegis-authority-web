@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dev
         // the memory cache will be empty. We auto-generate the profile here to ensure stateless persistence!
         if (tourError || !tourist) {
             const { data: newTourist } = await supabase.from('tourists').insert({
-                aadhaar: '3456-7890-1234', device_id: deviceId, name: 'DEMO TOURIST', active: true, lat: 28.6149, lng: 77.2100
+                device_id: deviceId, name: 'DEMO TOURIST', active: true, lat: 28.6149, lng: 77.2100
             }).select('*');
             if (newTourist && newTourist.length > 0) {
                 tourist = newTourist[0];

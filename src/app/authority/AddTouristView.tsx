@@ -44,30 +44,30 @@ export default function AddTouristView({ onSuccess }: { onSuccess: () => void })
                             <AlertCircle size={16} /> {error}
                         </div>
                     )}
-                    
+
                     <div className="space-y-4">
                         <div>
                             <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
-                            <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all" placeholder="E.g. S. RATHORE" />
+                            <input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all" placeholder="E.g. S. RATHORE" />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">UID / Passport</label>
-                                <input required type="text" value={formData.aadhaar} onChange={(e) => setFormData({...formData, aadhaar: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" placeholder="XXXX-XXXX-XXXX" />
+                                <input required type="text" value={formData.aadhaar} onChange={(e) => setFormData({ ...formData, aadhaar: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" placeholder="XXXX-XXXX-XXXX" />
                             </div>
                             <div>
                                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact</label>
-                                <input required type="text" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" placeholder="+91 9999999999" />
+                                <input required type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" placeholder="+91 9999999999" />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Initial Latitude</label>
-                                <input required type="number" step="any" value={formData.lat} onChange={(e) => setFormData({...formData, lat: parseFloat(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" />
+                                <input required type="number" step="any" value={formData.lat} onChange={(e) => setFormData({ ...formData, lat: parseFloat(e.target.value) })} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" />
                             </div>
                             <div>
                                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Initial Longitude</label>
-                                <input required type="number" step="any" value={formData.lng} onChange={(e) => setFormData({...formData, lng: parseFloat(e.target.value)})} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" />
+                                <input required type="number" step="any" value={formData.lng} onChange={(e) => setFormData({ ...formData, lng: parseFloat(e.target.value) })} className="w-full bg-slate-50 border border-slate-200 rounded-md px-4 py-3 text-sm focus:border-[#000080] focus:ring-1 focus:ring-[#000080] outline-none transition-all font-mono" />
                             </div>
                         </div>
                     </div>

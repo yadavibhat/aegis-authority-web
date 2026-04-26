@@ -6,16 +6,15 @@ import { supabase as supabaseServiceRole } from '@/lib/supabase';
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { aadhaar, device_id, name, lat, lng, active } = body;
+        const { device_id, name, lat, lng, active } = body;
 
         // Ensure the absolute bare minimum identity is provided
-        if (!aadhaar || !device_id) {
-            return NextResponse.json({ error: 'Missing required parameters. Need aadhaar and device_id.' }, { status: 400 });
+        if (!device_id) {
+            return NextResponse.json({ error: 'Missing required parameters. Need device_id.' }, { status: 400 });
         }
 
         // Create the payload of everything the app sent over
         const payload: any = {
-            aadhaar: aadhaar,
             device_id: device_id,
         };
         
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
         const { data: tourists, error: searchError } = await supabaseServiceRole
             .from('tourists')
             .select('*')
-            .eq('aadhaar', aadhaar);
+            .eq('device_id', device_id);
 
         if (searchError) throw searchError;
 
