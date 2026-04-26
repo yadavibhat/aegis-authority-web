@@ -17,60 +17,26 @@ export default function WearableDeviceView() {
             return;
         }
 
-        let channel: any;
-
         const initConnection = async () => {
             try {
-                // 1. Fetch the tourist linked to this device ID
-                const { data: tourists, error } = await supabaseBrowser
-                    .from('tourists')
-                    .select('*')
-                    .eq('device_id', deviceId)
-                    .limit(1);
-                
-                if (!tourists || tourists.length === 0) {
+                // 1. Fetch the tourist linked to this device ID from our unified mock backend
+                const res = await fetch(`/api/wearable/${deviceId}/status`);
+                const json = await res.json();
+
+                if (!res.ok || !json.tourist) {
                     setStatus(`NO TOURIST LINKED TO DEVICE: ${deviceId}`);
-                    subscribeToAlerts(null);
                     return;
                 }
 
-                const t = tourists[0];
+                const t = json.tourist;
                 setTourist(t);
-                setStatus(`Connected to Realtime Uplink — Linked to: ${t.full_name || t.id}`);
-                subscribeToAlerts(t);
+                setStatus(`Connected to Uplink — Linked to: ${t.name || t.id}`);
             } catch (e) {
-                setStatus('Error establishing database connection.');
+                setStatus('Error establishing uplink connection.');
             }
         };
 
-        const subscribeToAlerts = (t: any | null) => {
-            // Subscribe to all alerts, and filter on the client to avoid schema issues 
-            // (e.g. if the database uses tourist_id vs clerk_user_id)
-            channel = supabaseBrowser
-                .channel(`public:alerts-${deviceId}`)
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'alerts'
-                }, (payload) => {
-                    const alert = payload.new;
-                    if (t) {
-                        if (alert.clerk_user_id === t.clerk_user_id || alert.tourist_id === t.id) {
-                            setAlerts((prev) => [alert, ...prev]);
-                        }
-                    } else {
-                        // If no tourist found, show everything just for demo flexibility
-                        setAlerts((prev) => [alert, ...prev]);
-                    }
-                })
-                .subscribe();
-        };
-
         initConnection();
-
-        return () => {
-            if (channel) supabaseBrowser.removeChannel(channel);
-        };
     }, [deviceId]);
 
     return (
