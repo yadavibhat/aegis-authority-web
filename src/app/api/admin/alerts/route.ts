@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { checkRole, maskData } from '@/lib/auth-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
     try {
         await checkRole();
