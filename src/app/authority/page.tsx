@@ -311,7 +311,7 @@ export default function AuthorityScreen() {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-8 text-slate-900 font-bold text-sm tracking-tight">{t.name}</td>
-                                            <td className="px-5 py-8 font-mono text-slate-500 text-[11px]">{t.lat.toFixed(4)}, {t.lng.toFixed(4)}</td>
+                                            <td className="px-5 py-8 font-mono text-slate-500 text-[11px]">{t.lat?.toFixed ? t.lat.toFixed(4) : 'N/A'}, {t.lng?.toFixed ? t.lng.toFixed(4) : 'N/A'}</td>
                                             <td className="px-5 py-8 text-right">
                                                 <button onClick={() => {setSelectedTouristId(t.id); setActiveView('tourist-detail');}} className="text-[10px] uppercase font-bold text-[#000080] hover:text-black hover:underline tracking-wider">Investigate</button>
                                             </td>
@@ -411,7 +411,7 @@ export default function AuthorityScreen() {
                              <div className="flex justify-between items-end border-t border-slate-100 pt-3">
                                  <div>
                                     <p className="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Telemetry</p>
-                                    <p className="font-mono text-[10px] text-slate-700">{tourist.lat.toFixed(4)}, {tourist.lng.toFixed(4)}</p>
+                                    <p className="font-mono text-[10px] text-slate-700">{tourist.lat?.toFixed ? tourist.lat.toFixed(4) : 'N/A'}, {tourist.lng?.toFixed ? tourist.lng.toFixed(4) : 'N/A'}</p>
                                  </div>
                                  <button onClick={() => locationParams.loaded && setLocationParams({ loaded: true, center: [tourist.lat, tourist.lng] })} className="text-[10px] font-bold text-[#000080] hover:underline uppercase tracking-wider">Locate</button>
                              </div>
