@@ -21,9 +21,10 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                 setLocalAlerts(data.map(a => {
                     const typeUpper = (a.type || '').toUpperCase();
                     const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
+                    const isOpen = a.resolved === false || a.resolved === null;
                     return {
                         ...a,
-                        status: (a.status === null && isPanic) ? 'OPEN' : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED')
+                        status: isOpen ? 'OPEN' : 'RESOLVED'
                     };
                 }));
             }
@@ -46,9 +47,10 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                 (payload) => {
                     const typeUpper = (payload.new.type || '').toUpperCase();
                     const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
+                    const isOpen = payload.new.resolved === false || payload.new.resolved === null;
                     const normalized = {
                         ...payload.new,
-                        status: (payload.new.status === null && isPanic) ? 'OPEN' : (payload.new.status === 'true' || payload.new.status === true || payload.new.status === 'OPEN' ? 'OPEN' : 'RESOLVED')
+                        status: isOpen ? 'OPEN' : 'RESOLVED'
                     };
                     setLocalAlerts(prev => [normalized, ...prev]);
                 }

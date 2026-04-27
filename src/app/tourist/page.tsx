@@ -46,8 +46,8 @@ export default function TouristScreen() {
                     const activePanic = data.some((a: any) => {
                         const typeUpper = (a.type || '').toUpperCase();
                         const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
-                        const status = (a.status === null && isPanic) ? 'OPEN' : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED');
-                        return status === 'OPEN' && isPanic;
+                        const isOpen = a.resolved === false || a.resolved === null;
+                        return isOpen && isPanic;
                     });
                     setHasActivePanic(activePanic);
                 }
@@ -296,8 +296,8 @@ export default function TouristScreen() {
                                                         <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border ${['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((event.type || '').toUpperCase()) ? 'bg-red-50 border-red-200 text-red-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
                                                             {event.type}
                                                         </span>
-                                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${event.status === 'OPEN' || event.status === true || event.status === 'true' ? 'text-red-500' : 'text-slate-400'}`}>
-                                                            [{event.status === 'OPEN' || event.status === true || event.status === 'true' ? 'OPEN' : 'RESOLVED'}]
+                                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${event.resolved === false || event.resolved === null ? 'text-red-500' : 'text-slate-400'}`}>
+                                                            [{event.resolved === false || event.resolved === null ? 'OPEN' : 'RESOLVED'}]
                                                         </span>
                                                     </div>
                                                     <p className="text-xs font-mono text-slate-500 mt-2">

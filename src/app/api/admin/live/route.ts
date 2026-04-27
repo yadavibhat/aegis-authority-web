@@ -13,10 +13,9 @@ export async function GET(req: NextRequest) {
         const alerts = (rawAlerts || []).map(a => {
             const typeUpper = (a.type || '').toUpperCase();
             const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
-            // Default to OPEN if status is missing but it's a panic/sos, otherwise check for truthy values
-            const status = (a.status === null && isPanic) 
-                ? 'OPEN' 
-                : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED');
+            // The DB column is actually 'resolved' (boolean)
+            const isOpen = a.resolved === false || a.resolved === null;
+            const status = isOpen ? 'OPEN' : 'RESOLVED';
             
             return {
                 ...a,
