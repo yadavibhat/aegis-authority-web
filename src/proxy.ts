@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Bypassed Clerk Middleware temporarily to fix Vercel 500 errors from missing ENV keys
-export default function proxy(req: any) {
+export default function proxy() {
     return NextResponse.next();
 }
 

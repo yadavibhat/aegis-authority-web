@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
         }
         const { data: tourists } = await query;
         return NextResponse.json((tourists || []).map(maskData));
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 403 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        return NextResponse.json({ error: error.message }, { status: 403 });
     }
 }

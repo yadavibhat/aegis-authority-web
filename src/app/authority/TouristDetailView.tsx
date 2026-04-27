@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { User, Activity, AlertTriangle, Fingerprint, Calendar, ArrowLeft, Watch, Radio } from 'lucide-react';
+import { User, Activity, AlertTriangle, ArrowLeft, Watch, Radio } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { Alert, Tourist } from '@/types';
 
-export default function TouristDetailView({ tourist, onBack }: { tourist: any, onBack: () => void }) {
-    const [localAlerts, setLocalAlerts] = useState<any[]>([]);
+export default function TouristDetailView({ tourist, onBack }: { tourist: Tourist, onBack: () => void }) {
+    const [localAlerts, setLocalAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
@@ -24,8 +25,9 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                     const isOpen = a.resolved === false || a.resolved === null;
                     return {
                         ...a,
-                        status: isOpen ? 'OPEN' : 'RESOLVED'
-                    };
+                        status: isOpen ? 'OPEN' : 'RESOLVED',
+                        isPanic
+                    } as Alert;
                 }));
             }
             setLoading(false);
@@ -48,9 +50,10 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                     const typeUpper = (payload.new.type || '').toUpperCase();
                     const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
                     const isOpen = payload.new.resolved === false || payload.new.resolved === null;
-                    const normalized = {
-                        ...payload.new,
-                        status: isOpen ? 'OPEN' : 'RESOLVED'
+                    const normalized: Alert = {
+                        ...(payload.new as Alert),
+                        status: isOpen ? 'OPEN' : 'RESOLVED',
+                        isPanic
                     };
                     setLocalAlerts(prev => [normalized, ...prev]);
                 }
@@ -62,7 +65,7 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
         };
     }, [tourist?.id]);
 
-    const hasActivePanic = localAlerts.some(a => a.status === 'OPEN' && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()));
+    const hasActivePanic = localAlerts.some((a: Alert) => a.status === 'OPEN' && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()));
 
     return (
         <div className="flex-1 overflow-auto p-10 bg-slate-50 relative">
@@ -115,7 +118,7 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                                 No historical incidents linked to this profile.
                             </div>
                         ) : (
-                            localAlerts.map(alert => {
+                            localAlerts.map((alert: Alert) => {
                                 const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((alert.type || '').toUpperCase());
                                 return (
                                     <div key={alert.id} className={`p-6 hover:bg-slate-50 transition-colors flex justify-between items-start ${alert.status === 'OPEN' ? 'bg-red-50/20' : ''}`}>

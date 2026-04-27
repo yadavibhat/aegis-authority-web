@@ -3,22 +3,23 @@ import React, { useEffect, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { Activity, MapPin, Watch, AlertTriangle, BatteryMedium, Cpu, Globe, Radio } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { Alert, Tourist } from '@/types';
 
 export default function WearableDeviceView() {
     const params = useParams();
     const deviceId = params.deviceId as string || 'Unknown Device';
-    const [alerts, setAlerts] = useState<any[]>([]);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
     const [status, setStatus] = useState('Initializing Handshake...');
-    const [tourist, setTourist] = useState<any>(null);
+    const [tourist, setTourist] = useState<Tourist | null>(null);
     const [sosSent, setSosSent] = useState(false);
 
     useEffect(() => {
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-            setStatus('RESTRICTED: Missing Supabase URL. Add NEXT_PUBLIC_SUPABASE_URL to .env.local');
-            return;
-        }
-
         const initConnection = async () => {
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+                setStatus('RESTRICTED: Missing Supabase URL. Add NEXT_PUBLIC_SUPABASE_URL to .env.local');
+                return;
+            }
+
             try {
                 // 1. Fetch the tourist linked to this device ID from our unified mock backend
                 const res = await fetch(`/api/wearable/${deviceId}/status`);
@@ -29,7 +30,7 @@ export default function WearableDeviceView() {
                     return;
                 }
 
-                const t = json.tourist;
+                const t = json.tourist as Tourist;
                 setTourist(t);
                 setStatus(`Connected to Uplink — Linked to: ${t.name || t.id}`);
             } catch (e) {
@@ -55,7 +56,13 @@ export default function WearableDeviceView() {
                     filter: `tourist_id=eq.${tourist.id}`
                 },
                 (payload) => {
-                    setAlerts(prev => [payload.new, ...prev]);
+                    const newAlert = payload.new as Alert;
+                    const normalized: Alert = {
+                        ...newAlert,
+                        status: newAlert.resolved === false ? 'OPEN' : 'RESOLVED',
+                        isPanic: ['PANIC', 'SOS', 'FALL_DETECTED'].includes(newAlert.type || '')
+                    };
+                    setAlerts(prev => [normalized, ...prev]);
                 }
             )
             .subscribe();
@@ -72,8 +79,8 @@ export default function WearableDeviceView() {
                 setSosSent(true);
                 setTimeout(() => setSosSent(false), 5000);
             }
-        } catch (e) {
-            console.error("SOS transmission failed", e);
+        } catch {
+            console.error("SOS Signal Failure");
         }
     };
 
@@ -108,7 +115,7 @@ export default function WearableDeviceView() {
                                 <p className="text-[10px] text-center max-w-sm text-slate-400">When this device posts an emergency signal to Supabase, it will appear here automatically without a page reload.</p>
                             </div>
                         ) : (
-                            alerts.map((alert, idx) => (
+                            alerts.map((alert: Alert, idx) => (
                                 <div key={idx} className="bg-red-50 border-l-4 border-red-500 p-5 rounded-r-lg flex items-start justify-between shadow-sm">
                                     <div className="space-y-1">
                                         <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 text-[9px] uppercase tracking-[0.2em] font-black rounded border border-red-200 mb-2">{alert.type || 'EMERGENCY EVENT'}</span>
@@ -116,7 +123,7 @@ export default function WearableDeviceView() {
                                         <div className="text-slate-500 text-[10px] font-mono mt-1">COORDS: {alert.latitude?.toFixed(4) || '???'}, {alert.longitude?.toFixed(4) || '???'} | STATUS: {alert.status || 'OPEN'}</div>
                                     </div>
                                     <div className="text-[10px] text-slate-500 font-mono tracking-widest bg-white border border-gray-200 px-3 py-1 rounded shadow-sm">
-                                        {new Date(alert.created_at || Date.now()).toLocaleTimeString()}
+                                        {new Date(alert.created_at).toLocaleTimeString()}
                                     </div>
                                 </div>
                             ))

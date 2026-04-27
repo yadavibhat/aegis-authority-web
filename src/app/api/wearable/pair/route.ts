@@ -14,7 +14,8 @@ export async function POST(req: Request) {
         }
 
         // Create the payload of everything the app sent over
-        const payload: any = {
+        // Create the payload of everything the app sent over
+        const payload: { device_id: string; name?: string; lat?: number; lng?: number; active?: boolean } = {
             device_id: device_id,
         };
         
@@ -60,8 +61,9 @@ export async function POST(req: Request) {
             message: `Existing tourist profile updated and linked successfully to hardware ${device_id}!` 
         }, { status: 200 });
 
-    } catch (e: any) {
-        console.error("BLE PAIRING API ERROR:", e);
-        return NextResponse.json({ error: e.message || 'Internal Server Error' }, { status: 500 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        console.error("BLE PAIRING API ERROR:", error);
+        return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }

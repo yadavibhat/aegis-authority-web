@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { Radio } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { Alert, Tourist, Zone } from '@/types';
 
 const createTouristIcon = () => {
     return L.divIcon({
@@ -29,7 +30,7 @@ const createSOSIcon = () => {
     });
 };
 
-function ChangeView({ center }: { center: any }) {
+function ChangeView({ center }: { center: [number, number] }) {
     const map = useMap();
     useEffect(() => {
         if (center) {
@@ -39,7 +40,15 @@ function ChangeView({ center }: { center: any }) {
     return null;
 }
 
-export default function LiveMap({ center, activeTourists, openAlerts, zones, onPanicDetected }: any) {
+interface LiveMapProps {
+    center: [number, number];
+    activeTourists: Tourist[];
+    openAlerts: Alert[];
+    zones: Zone[];
+    onPanicDetected?: (alert: Alert) => void;
+}
+
+export default function LiveMap({ center, activeTourists, openAlerts, zones, onPanicDetected }: LiveMapProps) {
     
     useEffect(() => {
         // Realtime listener to trigger a global feed refresh when ANY new alert hits the grid
@@ -49,9 +58,10 @@ export default function LiveMap({ center, activeTourists, openAlerts, zones, onP
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'alerts' },
                 (payload) => {
-                    const isNewPanic = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(payload.new.type);
+                    const newAlert = payload.new as Alert;
+                    const isNewPanic = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(newAlert.type || '');
                     if (isNewPanic && onPanicDetected) {
-                        onPanicDetected(payload.new);
+                        onPanicDetected(newAlert);
                     }
                 }
             )
@@ -72,7 +82,7 @@ export default function LiveMap({ center, activeTourists, openAlerts, zones, onP
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
             
-            {zones?.map((zone: any) => (
+            {zones?.map((zone: Zone) => (
                 <Circle
                     key={zone.id}
                     center={[zone.center_lat, zone.center_lng]}
@@ -87,11 +97,13 @@ export default function LiveMap({ center, activeTourists, openAlerts, zones, onP
                 />
             ))}
 
-            {activeTourists?.map((t: any) => {
-                const hasAlert = openAlerts?.some((a: any) => a.tourist_id === t.id && (a.status === 'OPEN' || a.status === true));
-                const pos: [number, number] = [t.latitude || t.lat, t.longitude || t.lng];
+            {activeTourists?.map((t: Tourist) => {
+                const hasAlert = openAlerts?.some((a: Alert) => a.tourist_id === t.id && (a.status === 'OPEN' || a.resolved === false));
+                const lat = t.latitude ?? t.lat ?? 0;
+                const lng = t.longitude ?? t.lng ?? 0;
+                const pos: [number, number] = [lat, lng];
 
-                if (!pos[0] || !pos[1]) return null;
+                if (!lat || !lng) return null;
                 
                 return (
                     <Marker 

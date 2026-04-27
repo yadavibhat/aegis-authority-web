@@ -25,7 +25,8 @@ export default function MobileScreen() {
 <div className="w-full max-w-[560px] flex flex-col items-center">
 {/* Emblem Section */}
 <div className="mb-10 flex flex-col items-center text-center">
-<img alt="Government of India Emblem" className="h-[68px] mb-4" data-alt="The national emblem of India depicting the Ashoka Pillar with four lions in full color against a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbffRImwiQOtETAyESqV1sIZ8l4-JnF7L38NbB3pwt783rvFDR2ix-Ot_7PPKr1day8YHrTLSE5fkLpiZcn9NKzt4EK3pGS-ZPU4q94nIZqsYpvm1btTw0S5xIJF-E2hmSoycRbty13vM9EpI1KFxz_I2ZvpaNLHjfDGplQ4ToC3bZw4pd8lByl3EJYW29RjCnlBEqilctyqrieMX12wD4VCxZ3pMlBiCy5XbMnpwsfSTckAF8YD0gHkCZfz-8feLvdsSyrnwBmi3q"/>
+{/* eslint-disable-next-line @next/next/no-img-element */}
+<img alt="Government of India Emblem" className="h-[68px] mb-4" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbffRImwiQOtETAyESqV1sIZ8l4-JnF7L38NbB3pwt783rvFDR2ix-Ot_7PPKr1day8YHrTLSE5fkLpiZcn9NKzt4EK3pGS-ZPU4q94nIZqsYpvm1btTw0S5xIJF-E2hmSoycRbty13vM9EpI1KFxz_I2ZvpaNLHjfDGplQ4ToC3bZw4pd8lByl3EJYW29RjCnlBEqilctyqrieMX12wD4VCxZ3pMlBiCy5XbMnpwsfSTckAF8YD0gHkCZfz-8feLvdsSyrnwBmi3q"/>
 <p className="text-sm uppercase tracking-[0.12em] text-gray-500 font-medium mb-1">
           Ministry of Tourism · Department of Safety
         </p>

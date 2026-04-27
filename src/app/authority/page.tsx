@@ -17,6 +17,7 @@ import {
   Radio
 } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { Alert, Tourist, DashboardData, Zone } from '@/types';
 
 const LiveMapDynamic = dynamic(() => import('../../components/LiveMap'), { ssr: false });
 import AddTouristView from './AddTouristView';
@@ -25,47 +26,64 @@ import TouristDetailView from './TouristDetailView';
 
 export default function AuthorityScreen() {
    const router = useRouter();
-   const [data, setData] = useState<any>({ alerts: [], tourists: [], locations: [], zones: [] });
+   const [data, setData] = useState<DashboardData>({ alerts: [], tourists: [], locations: [], zones: [] });
    const [loading, setLoading] = useState(true);
-   const [locationParams, setLocationParams] = useState({ loaded: false, center: [28.6139, 77.2090] });
+   const [locationParams, setLocationParams] = useState({ loaded: false, center: [28.6139, 77.2090] as [number, number] });
    const [activeView, setActiveView] = useState<'map' | 'tourists' | 'add-tourist' | 'settings' | 'tourist-detail'>('map');
    const [selectedTouristId, setSelectedTouristId] = useState<string | null>(null);
    const [rightPanelTab, setRightPanelTab] = useState<'alerts'|'devices'>('alerts');
 
-   useEffect(() => {
-       const fetchIPLocation = async () => {
-           try {
-               const res = await fetch('https://ipapi.co/json/');
-               if (res.ok) {
-                   const loc = await res.json();
-                   if (loc.latitude && loc.longitude) {
-                       setLocationParams({ loaded: true, center: [loc.latitude, loc.longitude] });
-                       return;
-                   }
-               }
-           } catch(e) {
-               console.warn("IP Geolocation failed:", e);
-           }
-           alert("Location utterly blocked by OS and network. Defaulting to New Delhi.");
-           setLocationParams({ loaded: true, center: [28.6139, 77.2090] });
-       };
+    const fetchLiveFeed = async () => {
+        try {
+            const res = await fetch('/api/admin/live');
+            const result: DashboardData = await res.json();
+            if (res.ok) setData(result);
+        } catch (e) {
+            console.error("Error communicating with server:", e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-       // Request exact user position without high accuracy timeouts
-       if (navigator.geolocation) {
-           navigator.geolocation.getCurrentPosition(
-               (pos) => setLocationParams({ loaded: true, center: [pos.coords.latitude, pos.coords.longitude] }),
-               (err) => {
-                   console.log("Browser location blocked or timed out, trying IP fallback...");
-                   fetchIPLocation();
-               },
-               { timeout: 8000, enableHighAccuracy: false }
-           );
-       } else {
-           fetchIPLocation();
-       }
+    useEffect(() => {
+        const init = async () => {
+            await fetchLiveFeed();
+        };
+        init();
+    }, []);
 
-        fetchLiveFeed();
-        
+    useEffect(() => {
+        const fetchIPLocation = async () => {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                if (res.ok) {
+                    const loc = await res.json();
+                    if (loc.latitude && loc.longitude) {
+                        setLocationParams({ loaded: true, center: [loc.latitude, loc.longitude] });
+                        return;
+                    }
+                }
+            } catch(e) {
+                console.warn("IP Geolocation failed:", e);
+            }
+            alert("Location utterly blocked by OS and network. Defaulting to New Delhi.");
+            setLocationParams({ loaded: true, center: [28.6139, 77.2090] });
+        };
+
+        // Request exact user position without high accuracy timeouts
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setLocationParams({ loaded: true, center: [pos.coords.latitude, pos.coords.longitude] }),
+                (err) => {
+                    console.log("Browser location blocked or timed out, trying IP fallback...", err);
+                    fetchIPLocation();
+                },
+                { timeout: 8000, enableHighAccuracy: false }
+            );
+        } else {
+            fetchIPLocation();
+        }
+
         // Instant updates via Supabase Realtime
         const alertsChannel = supabaseBrowser.channel('global-alerts')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
@@ -87,27 +105,15 @@ export default function AuthorityScreen() {
             supabaseBrowser.removeChannel(alertsChannel);
             supabaseBrowser.removeChannel(locationsChannel);
         };
-   }, []);
-
-   const fetchLiveFeed = async () => {
-       try {
-           const res = await fetch('/api/admin/live');
-           const result = await res.json();
-           if (res.ok) setData(result);
-       } catch (e) {
-           console.error("Error communicating with server:", e);
-       } finally {
-           setLoading(false);
-       }
-   };
+    }, []);
 
    const handleResolveAlert = async (id: string) => {
        await fetch(`/api/admin/alerts/${id}/resolve`, { method: 'POST' });
        fetchLiveFeed();
    };
 
-   const openAlerts = data?.alerts?.filter((a: any) => a.status === 'OPEN') || [];
-   const activeTourists = data?.tourists?.filter((t: any) => t.active) || [];
+   const openAlerts = data?.alerts?.filter((a: Alert) => a.status === 'OPEN') || [];
+   const activeTouristsWithCoords = data?.tourists?.filter((t: Tourist) => t.latitude && t.longitude) || [];
 
   return (
     <>
@@ -212,7 +218,7 @@ export default function AuthorityScreen() {
         <div className="bg-white p-5 border-t-2 border-emerald-500 flex flex-col justify-center shadow-lg">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 truncate">Active Tourists</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900 font-mono">{activeTourists.length}</span>
+                <span className="text-2xl font-black text-slate-900 font-mono">{activeTouristsWithCoords.length}</span>
                 <span className="text-[10px] text-emerald-600 font-bold truncate">LIVE</span>
             </div>
         </div>
@@ -248,7 +254,7 @@ export default function AuthorityScreen() {
                 {locationParams.loaded ? (
                     <LiveMapDynamic 
                         center={locationParams.center} 
-                        activeTourists={activeTourists} 
+                        activeTourists={activeTouristsWithCoords} 
                         openAlerts={openAlerts} 
                         zones={data?.zones} 
                         onPanicDetected={() => fetchLiveFeed()}
@@ -312,8 +318,8 @@ export default function AuthorityScreen() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {(data?.tourists || []).map((t: any) => {
-                                    const hasSOS = data?.alerts?.some((a: any) => a.tourist_id === t.id && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()) && a.status === 'OPEN');
+                                {(data?.tourists || []).map((t: Tourist) => {
+                                    const hasSOS = data?.alerts?.some((a: Alert) => a.tourist_id === t.id && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()) && a.status === 'OPEN');
                                     let statusColor = 'text-emerald-600 bg-emerald-50 border-emerald-200';
                                     let statusText = 'ACTIVE';
                                     if (hasSOS) {
@@ -356,7 +362,7 @@ export default function AuthorityScreen() {
         {activeView === 'settings' && <SettingsView />}
         {activeView === 'tourist-detail' && selectedTouristId && (
             <TouristDetailView 
-                tourist={data?.tourists?.find((t: any) => t.id === selectedTouristId)} 
+                tourist={data?.tourists?.find((t: Tourist) => t.id === selectedTouristId) as Tourist} 
                 onBack={() => setActiveView('tourists')} 
             />
         )}
@@ -381,8 +387,8 @@ export default function AuthorityScreen() {
                      </div>
                 )}
 
-                {openAlerts.map((alert: any) => {
-                    const tourist = data?.tourists?.find((t: any) => t.id === alert.tourist_id);
+                {openAlerts.map((alert: Alert) => {
+                    const tourist = data?.tourists?.find((t: Tourist) => t.id === alert.tourist_id);
                     const isSOS = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((alert.type || '').toUpperCase());
                     const colorClass = isSOS ? 'border-red-500 bg-red-50/30 text-red-600' : 'border-amber-500 bg-amber-50/30 text-amber-600';
 
@@ -410,14 +416,14 @@ export default function AuthorityScreen() {
 
         {rightPanelTab === 'devices' && (
             <>
-                {(!activeTourists || activeTourists.length === 0) && (
+                {(!activeTouristsWithCoords || activeTouristsWithCoords.length === 0) && (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                         <Radio size={48} className="mb-4 opacity-30" />
                         <p className="text-sm font-bold uppercase tracking-wider text-slate-500">No Signal</p>
                         <p className="text-[11px] mt-1 text-slate-400">0 devices transmitting</p>
                     </div>
                 )}
-                {activeTourists.map((tourist: any) => (
+                {activeTouristsWithCoords.map((tourist: Tourist) => (
                     <div key={tourist.id} className="bg-white border border-slate-200 rounded-[8px] p-12 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 left-0 bottom-0 w-1 bg-emerald-500"></div>
                         <div className="pl-2">
@@ -434,7 +440,7 @@ export default function AuthorityScreen() {
                                     <p className="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Telemetry</p>
                                     <p className="font-mono text-[10px] text-slate-700">{tourist.latitude?.toFixed ? tourist.latitude.toFixed(4) : 'N/A'}, {tourist.longitude?.toFixed ? tourist.longitude.toFixed(4) : 'N/A'}</p>
                                  </div>
-                                 <button onClick={() => locationParams.loaded && setLocationParams({ loaded: true, center: [tourist.latitude, tourist.longitude] })} className="text-[10px] font-bold text-[#000080] hover:underline uppercase tracking-wider">Locate</button>
+                                 <button onClick={() => locationParams.loaded && setLocationParams({ loaded: true, center: [tourist.latitude as number, tourist.longitude as number] })} className="text-[10px] font-bold text-[#000080] hover:underline uppercase tracking-wider">Locate</button>
                              </div>
                         </div>
                     </div>

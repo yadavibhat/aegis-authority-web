@@ -1,24 +1,19 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 export default function AlertScreen() {
-  const router = useRouter();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<unknown>(null);
 
   // Simple interactive wrapper handler
   const handleAction = async (endpoint: string, method: string = 'GET') => {
-    setLoading(true);
     try {
       const res = await fetch(endpoint, { method });
       const result = await res.json();
       setData(result);
       alert("Fetched Data! Total records: " + (Array.isArray(result) ? result.length : "N/A"));
-    } catch (e) {
+    } catch {
       alert("Error communicating with server.");
-    }
-    setLoading(false);
+    };
   };
 
  return (
@@ -85,7 +80,8 @@ export default function AlertScreen() {
             Live Incident Location
           </div>
 <div className="relative w-full h-12 border border-outline mb-3 overflow-hidden">
-<img className="w-full h-full object-cover grayscale contrast-125" data-alt="Top-down satellite view of an urban park area with detailed pathways, green foliage, and surrounding city buildings in high contrast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCA2HZ1NX9Ig-RyTbHIagbIQpmD4TN7SpOynNSoBvcAuJlAsHbDWNc9ZaqzOeu8yGG3VFx3thHcnZ5Mr0fACyEljw3AF6WsAFkO2NnenAWNqjueComhLTEbLoUU-ACwG-0inLotMk_2gjygT7HK7jp51C6AmYRL07RkhMYTlAo9kWGZAWze-k-T4YN5omuv_deYXenXC6mbSuRpP2YugzaV-iuk5Et2SXIL71X7A8iLaUhfoOFHNoV5Eqqb7DtNPXp82Eejm9B8y03a"/>
+{/* eslint-disable-next-line @next/next/no-img-element */}
+<img className="w-full h-full object-cover grayscale contrast-125" alt="Satellite view of urban area" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCA2HZ1NX9Ig-RyTbHIagbIQpmD4TN7SpOynNSoBvcAuJlAsHbDWNc9ZaqzOeu8yGG3VFx3thHcnZ5Mr0fACyEljw3AF6WsAFkO2NnenAWNqjueComhLTEbLoUU-ACwG-0inLotMk_2gjygT7HK7jp51C6AmYRL07RkhMYTlAo9kWGZAWze-k-T4YN5omuv_deYXenXC6mbSuRpP2YugzaV-iuk5Et2SXIL71X7A8iLaUhfoOFHNoV5Eqqb7DtNPXp82Eejm9B8y03a"/>
 <div className="absolute inset-0 bg-primary/5"></div>
 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
 <div className="w-4 h-12 bg-error rounded-full pulse-red"></div>
@@ -112,7 +108,8 @@ export default function AlertScreen() {
           </div>
 <div className="flex gap-10 items-start">
 <div className="relative w-16 h-12 border border-outline">
-<img className="w-full h-full object-cover blur-md grayscale" data-alt="Muted professional portrait of a man, heavily blurred and desaturated for data privacy mask" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh4b_zGt-T2P6_xWD8rLkokXhG5Hgw9F90tFJ7gbHBq-F-NhQoHN5S34Wo1Ko1P1TIXb-ZSiGD80kDOis6CTbDbUF4R_mlJ8YJnazS5rRzgP_LgyFO7IU44dNJKSJ3lobV45ecSFPz_mJYc6AefX4ihZzriZOkprMjTanrcu6CAb3XlfCwWnPW-qQLhufc6MvtFBs50Vzn4cJ1A9KDCQdfEMZQ73c73gJz2GvpQ2YG3MyEk8Tigt_KakxN78uH2jbyyJKQwwOUxgwm"/>
+{/* eslint-disable-next-line @next/next/no-img-element */}
+<img className="w-full h-full object-cover blur-md grayscale" alt="Blurred tourist profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh4b_zGt-T2P6_xWD8rLkokXhG5Hgw9F90tFJ7gbHBq-F-NhQoHN5S34Wo1Ko1P1TIXb-ZSiGD80kDOis6CTbDbUF4R_mlJ8YJnazS5rRzgP_LgyFO7IU44dNJKSJ3lobV45ecSFPz_mJYc6AefX4ihZzriZOkprMjTanrcu6CAb3XlfCwWnPW-qQLhufc6MvtFBs50Vzn4cJ1A9KDCQdfEMZQ73c73gJz2GvpQ2YG3MyEk8Tigt_KakxN78uH2jbyyJKQwwOUxgwm"/>
 </div>
 <div className="flex-1">
 <div className="text-lg font-bold text-on-surface mb-1">Ravi K. ████████</div>

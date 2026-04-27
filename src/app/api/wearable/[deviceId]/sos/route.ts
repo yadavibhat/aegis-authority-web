@@ -3,34 +3,39 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
     try {
-        // Resolve associated tourist via simulated DB logic
         const { deviceId } = await params;
-        let { data: tourist, error: tourError } = await supabase.from('tourists').select('*').eq('device_id', deviceId).single();
+        const { data: tourist, error: tourError } = await supabase.from('tourists').select('*').eq('device_id', deviceId).single();
         
-        // VERCEL LAMBDA BYPASS: If the pairing API fired on a different serverless instance, 
-        // the memory cache will be empty. We auto-generate the profile here to ensure stateless persistence!
+        let targetTouristId: string;
+
         if (tourError || !tourist) {
-            const { data: newTourist } = await supabase.from('tourists').insert({
-                device_id: deviceId, name: 'DEMO TOURIST', active: true, lat: 28.6149, lng: 77.2100
+            // Auto-fallback for demo
+            const { data: newTourists } = await supabase.from('tourists').insert({
+                device_id: deviceId, 
+                name: 'DEMO TOURIST', 
+                active: true, 
+                lat: 28.6149, 
+                lng: 77.2100
             }).select('*');
-            if (newTourist && newTourist.length > 0) {
-                tourist = newTourist[0];
-            } else {
-                return NextResponse.json({ error: "Hardware ID not paired, stateless creation failed" }, { status: 404 });
-            }
+            
+            if (!newTourists || newTourists.length === 0) throw new Error("Failed to resolve tourist.");
+            targetTouristId = newTourists[0].id;
+        } else {
+            targetTouristId = tourist.id;
         }
 
-        // Insert new emergency alert for the dashboard to scoop up!
         await supabase.from('alerts').insert({
-            tourist_id: tourist.id,
+            tourist_id: targetTouristId,
             status: 'OPEN',
             type: 'PANIC',
             latitude: 28.6149,
-            longitude: 77.2100
+            longitude: 77.2100,
+            resolved: false
         });
 
         return NextResponse.json({ success: true, message: 'Hardware ping successful.' });
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

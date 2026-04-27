@@ -12,8 +12,9 @@ export async function GET(req: NextRequest) {
         }
         const { data: zones } = await query;
         return NextResponse.json(zones);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 403 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        return NextResponse.json({ error: error.message }, { status: 403 });
     }
 }
 
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
         const { data, error } = await supabase.from('zones').insert(body).select();
         if (error) throw new Error(error.message);
         return NextResponse.json(data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 403 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        return NextResponse.json({ error: error.message }, { status: 403 });
     }
 }

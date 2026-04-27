@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Settings, ShieldAlert, Radio } from 'lucide-react';
 
 export default function SettingsView() {
-    const [useSimulation, setUseSimulation] = useState(false);
-    const [hapticFallback, setHapticFallback] = useState(true);
+    const [useSimulation, setUseSimulation] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('aegis_sim') === 'true';
+        }
+        return false;
+    });
+    const [hapticFallback, setHapticFallback] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('aegis_haptic') !== 'false';
+        }
+        return true;
+    });
 
     useEffect(() => {
-        setUseSimulation(localStorage.getItem('aegis_sim') === 'true');
-        setHapticFallback(localStorage.getItem('aegis_haptic') !== 'false');
+        // State initialized lazily
     }, []);
 
     const toggleSim = () => {

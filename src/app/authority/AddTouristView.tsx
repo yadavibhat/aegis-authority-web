@@ -21,8 +21,9 @@ export default function AddTouristView({ onSuccess }: { onSuccess: () => void })
                 throw new Error(err.error || 'Failed to add personnel');
             }
             onSuccess();
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            const error = err as Error;
+            setError(error.message);
         } finally {
             setLoading(false);
         }

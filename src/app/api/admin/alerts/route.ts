@@ -1,10 +1,11 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { checkRole, maskData } from '@/lib/auth-utils';
+import { Alert, Tourist } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: Request) {
     try {
         await checkRole();
         // Specifically avoid the relational foreign key inner-join since the user's live DB may lack it
@@ -16,27 +17,19 @@ export async function GET(req: NextRequest) {
             return NextResponse.json([]);
         }
 
-        const alerts = (rawAlerts || []).map((alert: any) => ({
-            ...alert,
-            tourist: (rawTourists || []).find((t: any) => t.id === alert.tourist_id) || {
-                name: 'UNKNOWN SUBJECT',
-                device_id: 'UNKNOWN'
-            }
-        }));
-
-        if (alerts) {
-            alerts.forEach((a: any) => {
-                if (a.tourist) { 
-                    if (Array.isArray(a.tourist)) {
-                        a.tourist = a.tourist.map(maskData);
-                    } else {
-                        a.tourist = maskData(a.tourist);
-                    }
+        const alerts = (rawAlerts || []).map((alert: Alert) => {
+            const tour = (rawTourists || []).find((t: Tourist) => t.id === alert.tourist_id);
+            return {
+                ...alert,
+                tourist: tour ? maskData(tour) : {
+                    name: 'UNKNOWN SUBJECT',
+                    device_id: 'UNKNOWN'
                 }
-            });
-        }
+            };
+        });
+
         return NextResponse.json(alerts);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 403 });
+    } catch {
+        return NextResponse.json({ error: 'Auth failed' }, { status: 401 });
     }
 }

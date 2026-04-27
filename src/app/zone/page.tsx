@@ -1,10 +1,8 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 export default function ZoneScreen() {
-  const router = useRouter();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
 
   // Simple interactive wrapper handler
@@ -14,23 +12,24 @@ export default function ZoneScreen() {
       const res = await fetch(endpoint, { method });
       const result = await res.json();
       setData(result);
+      console.log("Fetched Data", result);
       alert("Fetched Data! Total records: " + (Array.isArray(result) ? result.length : "N/A"));
-    } catch (e) {
+    } catch {
       alert("Error communicating with server.");
     }
     setLoading(false);
   };
 
- return (
-  <>
-   <div onClick={(e) => {
-     // Generic interceptor for untouched buttons
-     const target = e.target as HTMLElement;
-     if (target.tagName === 'BUTTON' && !target.hasAttribute('data-action-wired')) {
-        alert("Simulated Button Click Request. Route logic active.");
-        handleAction('/api/admin/live'); // Force a fetch on generic buttons
-     }
-   }}>
+  return (
+    <div className={loading ? "opacity-50 pointer-events-none" : ""}>
+    <div onClick={(e) => {
+      // Generic interceptor for untouched buttons
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON' && !target.hasAttribute('data-action-wired')) {
+         alert("Simulated Button Click Request. Route logic active.");
+         handleAction('/api/admin/live'); // Force a fetch on generic buttons
+      }
+    }}>
    
 {/* Top Navigation Anchor */}
 <header className="bg-white dark:bg-slate-900 border-b border-[#e5e7eb] dark:border-slate-800 flex justify-between items-center h-12 px-8 w-full fixed top-0 z-50">
@@ -169,7 +168,8 @@ export default function ZoneScreen() {
 <section className="flex-1 flex flex-col bg-slate-50">
 {/* Map Area */}
 <div className="relative flex-1 bg-[#1a1a1a] overflow-hidden">
-<img alt="Interactive Grid Map" className="w-full h-full object-cover opacity-50 grayscale contrast-125" data-alt="Dark charcoal satellite map view of a metropolitan city with minimal neon green and red circular geometric overlays" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSqeTyK1qQSqjmQ8Zj_dFU0TJ_2tr2RYOejws6t-m-bjIWILJ0wRCwR_UHiY_0MHvaeBVBrK8HvzTDHC75Fk8znxk6oaUqksfGtvP0M7LesrH75AAF1S7jVvmVgrEvMoLsEFvbVr13XAsr0LBUOSycq0QgKH-EJso0V90MbK1yWUhU6GoiGKdrFwtr4bTQw6adQELOwztrtIRXmD7Pt7IC83wsDcWXufrSlHG4-mTwKfv0Al2cwuHeaOkzOMt5sBEDQJES1xvzDgZp"/>
+{/* eslint-disable-next-line @next/next/no-img-element */}
+<img alt="Zone Visualization" className="w-full h-full object-cover grayscale opacity-20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbffRImwiQOtETAyESqV1sIZ8l4-JnF7L38NbB3pwt783rvFDR2ix-Ot_7PPKr1day8YHrTLSE5fkLpiZcn9NKzt4EK3pGS-ZPU4q94nIZqsYpvm1btTw0S5xIJF-E2hmSoycRbty13vM9EpI1KFxz_I2ZvpaNLHjfDGplQ4ToC3bZw4pd8lByl3EJYW29RjCnlBEqilctyqrieMX12wD4VCxZ3pMlBiCy5XbMnpwsfSTckAF8YD0gHkCZfz-8feLvdsSyrnwBmi3q"/>
 {/* SVG Overlays for Zones */}
 <div className="absolute inset-0 pointer-events-none">
 <div className="absolute top-1/3 left-1/4 w-32 h-12 border-2 border-green-500 bg-green-500/30 rounded-full flex items-center justify-center">
@@ -288,6 +288,6 @@ export default function ZoneScreen() {
 </main>
 
    </div>
-  </>
+  </div>
  );
 }

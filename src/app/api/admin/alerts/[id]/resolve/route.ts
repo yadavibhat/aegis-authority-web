@@ -9,7 +9,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const { data, error } = await supabase.from('alerts').update({ status: 'RESOLVED' }).eq('id', id).select();
         if (error) throw new Error(error.message);
         return NextResponse.json(data);
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message }, { status: 403 });
+    } catch (e: unknown) {
+        const error = e as Error;
+        return NextResponse.json({ error: error.message || 'Forbidden' }, { status: 403 });
     }
 }

@@ -29,7 +29,7 @@ export default function LoginScreen() {
            } else {
                setErrorMsg(result.error || "Authentication failed. Please verify credentials.");
            }
-       } catch (error) {
+       } catch {
            setErrorMsg("Network error connecting to the authentication server.");
        }
        setLoading(false);
