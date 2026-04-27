@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
         await checkRole();
         
         // 1. Fetch alerts and normalize them
-        const { data: rawAlerts, error: alertsError } = await supabase.from('alerts').select('*').order('created_at', { ascending: false });
+        const { data: rawAlerts, error: alertsError } = await supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(50);
         if (alertsError) {
             console.error("Alerts Query Error:", alertsError);
             throw new Error(`Failed to fetch alerts: ${alertsError.message}`);
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
             throw new Error(`Failed to fetch tourists: ${touristsError.message}`);
         }
 
-        const { data: locations, error: locationsError } = await supabase.from('locations').select('*').order('created_at', { ascending: false });
+        const { data: locations, error: locationsError } = await supabase.from('locations').select('*');
         if (locationsError) {
             console.warn("Locations Query Error (Non-critical):", locationsError);
             // We can continue even if breadcrumbs fail

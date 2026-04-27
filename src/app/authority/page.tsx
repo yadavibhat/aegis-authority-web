@@ -38,13 +38,16 @@ export default function AuthorityScreen() {
    const [systemStatus, setSystemStatus] = useState<'OK' | 'DEGRADED' | 'OFFLINE'>('OK');
    const isFetching = useRef(false);
 
-    const fetchLiveFeed = async () => {
+    const fetchLiveFeed = async (retryCount = 0) => {
         if (isFetching.current) return;
         isFetching.current = true;
         
         const start = performance.now();
         try {
-            const res = await fetch('/api/admin/live');
+            const res = await fetch('/api/admin/live', { 
+                cache: 'no-store'
+            });
+            
             const end = performance.now();
             setLatency(Math.round(end - start));
             
@@ -53,17 +56,35 @@ export default function AuthorityScreen() {
                 setData(result);
                 setSystemStatus('OK');
             } else {
-                console.warn("Live API returned non-OK status:", res.status);
+                console.warn(`Live API non-OK (${res.status})`);
                 setSystemStatus('DEGRADED');
             }
-        } catch (e) {
-            console.error("Critical Network Error in fetchLiveFeed:", e);
+        } catch (e: any) {
+            console.error("Network Error in fetchLiveFeed:", e);
+            
+            // Exponential backoff retry
+            if (retryCount < 2) {
+                const delay = (retryCount + 1) * 2000;
+                setTimeout(() => {
+                    isFetching.current = false;
+                    fetchLiveFeed(retryCount + 1);
+                }, delay);
+                return;
+            }
+
             setSystemStatus('OFFLINE');
             setLatency(null);
         } finally {
-            setLoading(false);
             isFetching.current = false;
+            setLoading(false);
         }
+    };
+
+    // Debounced version of the fetch to prevent storming the server
+    const debouncedFetch = useRef<NodeJS.Timeout | null>(null);
+    const triggerFetch = () => {
+        if (debouncedFetch.current) clearTimeout(debouncedFetch.current);
+        debouncedFetch.current = setTimeout(fetchLiveFeed, 500);
     };
 
     useEffect(() => {
@@ -120,24 +141,25 @@ export default function AuthorityScreen() {
                     setTimeout(() => setShowNotification(false), 10000);
                 }
                 
-                fetchLiveFeed();
+                triggerFetch();
             })
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, () => {
                 console.log("Alert update detected, refreshing feed...");
-                fetchLiveFeed();
+                triggerFetch();
             })
             .subscribe();
 
         const locationsChannel = supabaseBrowser.channel('global-locations')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'locations' }, () => {
                 console.log("Location update detected, refreshing map...");
-                fetchLiveFeed();
+                triggerFetch();
             })
             .subscribe();
 
-        const interval = setInterval(fetchLiveFeed, 10000); // Keep polling as safety fallback but slower (10s)
+        const interval = setInterval(triggerFetch, 15000); // 15s polling fallback
         return () => {
             clearInterval(interval);
+            if (debouncedFetch.current) clearTimeout(debouncedFetch.current);
             supabaseBrowser.removeChannel(alertsChannel);
             supabaseBrowser.removeChannel(locationsChannel);
         };

@@ -25,10 +25,12 @@ body {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
     transform: scale(0.95);
   }
+
   70% {
     box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
     transform: scale(1.05);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
     transform: scale(0.95);
@@ -40,6 +42,14 @@ body {
 }
 
 /* Custom utility classes if needed */
-.bg-brand-blue { background-color: var(--brand-blue); }
-.text-brand-blue { color: var(--brand-blue); }
-.border-brand-blue { border-color: var(--brand-blue); }
+.bg-brand-blue {
+  background-color: var(--brand-blue);
+}
+
+.text-brand-blue {
+  color: var(--brand-blue);
+}
+
+.border-brand-blue {
+  border-color: var(--brand-blue);
+}
