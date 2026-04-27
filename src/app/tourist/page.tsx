@@ -20,6 +20,7 @@ import {
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { useRouter } from 'next/navigation';
 import { Alert, Tourist } from '@/types';
+import { ShieldAlert, ShieldCheck, Radio } from 'lucide-react';
 
 export default function TouristScreen() {
     const router = useRouter();
@@ -28,6 +29,24 @@ export default function TouristScreen() {
     const [loading, setLoading] = useState(true);
     const [hasActivePanic, setHasActivePanic] = useState(false);
     const [sosProcessing, setSosProcessing] = useState(false);
+    const [lastNotification, setLastNotification] = useState<Alert | null>(null);
+    const [showNotification, setShowNotification] = useState(false);
+
+    const isIST = (dateStr: string) => {
+        if (!dateStr) return '---';
+        // Force UTC parsing if no timezone is present
+        const date = dateStr.includes('Z') || dateStr.includes('+') 
+            ? new Date(dateStr) 
+            : new Date(dateStr.replace(' ', 'T') + 'Z');
+            
+        return date.toLocaleTimeString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    };
 
     const fetchEvents = async (tid: string) => {
         const { data, error } = await supabaseBrowser
@@ -77,7 +96,21 @@ export default function TouristScreen() {
             .channel('tourist-alerts-sync')
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'alerts' },
+                { event: 'INSERT', schema: 'public', table: 'alerts' },
+                (payload) => {
+                    const newAlert = payload.new as Alert;
+                    // Only show notification for THIS tourist's own alerts if they are critical
+                    if (newAlert.tourist_id === tourist?.id && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((newAlert.type || '').toUpperCase())) {
+                        setLastNotification(newAlert);
+                        setShowNotification(true);
+                        setTimeout(() => setShowNotification(false), 10000);
+                    }
+                    if (tourist?.id) fetchEvents(tourist.id);
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'alerts' },
                 () => {
                     if (tourist?.id) fetchEvents(tourist.id);
                 }
@@ -127,6 +160,19 @@ export default function TouristScreen() {
 
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans selection:bg-[#000080] pb-32">
+            {/* Notification Popup */}
+            {showNotification && lastNotification && (
+                <div className="fixed top-6 left-6 right-6 z-[200] bg-red-600 p-6 rounded-3xl shadow-2xl animate-in slide-in-from-top-4 flex items-center gap-4">
+                    <div className="bg-white/20 p-3 rounded-full">
+                        <ShieldAlert className="text-white" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-white">EMERGENCY ALERT</h4>
+                        <p className="text-xs text-red-100">{lastNotification.message}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Header / StatusBar */}
             <div className={`p-6 border-b transition-all duration-1000 sticky top-0 z-50 backdrop-blur-md ${hasActivePanic ? 'bg-red-600/90 border-red-500 shadow-2xl shadow-red-900/40' : 'bg-slate-900/80 border-white/5'}`}>
                 <div className="max-w-md mx-auto flex justify-between items-center">
@@ -304,8 +350,8 @@ export default function TouristScreen() {
                                                     {event.status === 'OPEN' ? 'CRITICAL / UNRESOLVED' : 'STABILIZED / CLOSED'}
                                                 </span>
                                             </div>
-                                            <p className="text-[10px] font-mono text-white/30 font-bold">
-                                                {new Date(event.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                             <p className="text-[10px] font-mono text-white/30 font-bold">
+                                                {isIST(event.created_at)} (IST)
                                             </p>
                                         </div>
                                         <p className="text-sm text-white/70 leading-relaxed font-medium">

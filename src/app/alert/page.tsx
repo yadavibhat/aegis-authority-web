@@ -65,7 +65,9 @@ export default function AlertScreen() {
 </button>
 </div>
 <h1 className="text-h2 font-sans font-bold text-primary mb-1">Ravi K. [Case not accepted]</h1>
-<div className="font-mono text-[13px] text-on-surface-variant tracking-tighter">09:42:17 IST · 25 APR 2026</div>
+<div className="font-mono text-[13px] text-on-surface-variant tracking-tighter">
+    {new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })} IST · {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
+</div>
 <div className="flex gap-10 mt-6">
 <button className="h-12 flex-1 bg-primary text-white py-3 text-xs font-bold uppercase tracking-widest rounded-[6px] hover:bg-opacity-90">Accept Case</button><button data-action-wired onClick={() => handleAction("/api/admin/alerts/1/resolve", "POST")}> &amp; Reveal Details</button>
 <button className="h-12 flex-1 border border-primary text-primary py-3 text-xs font-bold uppercase tracking-widest rounded-[6px] hover:bg-slate-50">Escalate to Senior</button>

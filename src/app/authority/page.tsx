@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { 
@@ -36,27 +36,33 @@ export default function AuthorityScreen() {
    const [showNotification, setShowNotification] = useState(false);
    const [latency, setLatency] = useState<number | null>(null);
    const [systemStatus, setSystemStatus] = useState<'OK' | 'DEGRADED' | 'OFFLINE'>('OK');
+   const isFetching = useRef(false);
 
     const fetchLiveFeed = async () => {
+        if (isFetching.current) return;
+        isFetching.current = true;
+        
         const start = performance.now();
         try {
             const res = await fetch('/api/admin/live');
             const end = performance.now();
             setLatency(Math.round(end - start));
             
-            const result: DashboardData = await res.json();
             if (res.ok) {
+                const result: DashboardData = await res.json();
                 setData(result);
                 setSystemStatus('OK');
             } else {
+                console.warn("Live API returned non-OK status:", res.status);
                 setSystemStatus('DEGRADED');
             }
         } catch (e) {
-            console.error("Error communicating with server:", e);
+            console.error("Critical Network Error in fetchLiveFeed:", e);
             setSystemStatus('OFFLINE');
             setLatency(null);
         } finally {
             setLoading(false);
+            isFetching.current = false;
         }
     };
 
@@ -138,7 +144,12 @@ export default function AuthorityScreen() {
     }, []);
 
     const isIST = (dateStr: string) => {
-        return new Date(dateStr).toLocaleTimeString('en-IN', { 
+        if (!dateStr) return '---';
+        const date = dateStr.includes('Z') || dateStr.includes('+') 
+            ? new Date(dateStr) 
+            : new Date(dateStr.replace(' ', 'T') + 'Z');
+            
+        return date.toLocaleTimeString('en-IN', { 
             timeZone: 'Asia/Kolkata',
             hour: '2-digit',
             minute: '2-digit',

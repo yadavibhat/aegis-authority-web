@@ -10,11 +10,15 @@ export async function GET(req: NextRequest) {
         await checkRole();
         
         // 1. Fetch alerts and normalize them
-        const { data: rawAlerts } = await supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(100);
+        const { data: rawAlerts, error: alertsError } = await supabase.from('alerts').select('*').order('created_at', { ascending: false });
+        if (alertsError) {
+            console.error("Alerts Query Error:", alertsError);
+            throw new Error(`Failed to fetch alerts: ${alertsError.message}`);
+        }
+
         const alerts: Alert[] = (rawAlerts || []).map(a => {
             const typeUpper = (a.type || '').toUpperCase();
             const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
-            // The DB column is actually 'resolved' (boolean)
             const isOpen = a.resolved === false || a.resolved === null;
             const status = isOpen ? 'OPEN' : 'RESOLVED';
             
@@ -26,8 +30,17 @@ export async function GET(req: NextRequest) {
         });
 
         // 2. Fetch tourists and their latest locations
-        const { data: touristsData } = await supabase.from('tourists').select('*');
-        const { data: locations } = await supabase.from('locations').select('*').order('created_at', { ascending: false });
+        const { data: touristsData, error: touristsError } = await supabase.from('tourists').select('*');
+        if (touristsError) {
+            console.error("Tourists Query Error:", touristsError);
+            throw new Error(`Failed to fetch tourists: ${touristsError.message}`);
+        }
+
+        const { data: locations, error: locationsError } = await supabase.from('locations').select('*').order('created_at', { ascending: false });
+        if (locationsError) {
+            console.warn("Locations Query Error (Non-critical):", locationsError);
+            // We can continue even if breadcrumbs fail
+        }
         
         const tourists: Tourist[] = (touristsData || []).map(t => {
             const latestLoc = (locations || []).find((l: Location) => l.tourist_id === t.id);
@@ -40,20 +53,23 @@ export async function GET(req: NextRequest) {
         });
 
         // 3. Fetch zones
-        const { data: zones } = await supabase.from('zones').select('*');
+        const { data: zones, error: zonesError } = await supabase.from('zones').select('*');
+        if (zonesError) {
+            console.warn("Zones Query Error (Non-critical):", zonesError);
+        }
 
         return NextResponse.json({ 
             alerts, 
-            tourists: tourists.filter((t: Tourist) => t.latitude && t.longitude), // Only return tourists with real coordinates
+            tourists: tourists.filter((t: Tourist) => t.latitude && t.longitude),
             zones: (zones || []).map((z: Zone) => ({
                 ...z,
-                center_lat: z.center_lat || 28.6149, // Fallback to New Delhi if missing
+                center_lat: z.center_lat || 28.6149,
                 center_lng: z.center_lng || 77.2100
             }))
         });
     } catch (e: unknown) {
-        console.error("Live API Error:", e);
-        const message = e instanceof Error ? e.message : 'Unknown error';
-        return NextResponse.json({ error: message }, { status: 403 });
+        console.error("LIVE API CRITICAL FAILURE:", e);
+        const message = e instanceof Error ? e.message : 'Unknown internal error';
+        return NextResponse.json({ error: message }, { status: 500 }); // Return 500 for actual errors
     }
 }
