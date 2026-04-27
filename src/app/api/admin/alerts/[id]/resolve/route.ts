@@ -6,7 +6,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     try {
         await checkRole();
         const { id } = await params;
-        const { data, error } = await supabase.from('alerts').update({ status: 'RESOLVED' }).eq('id', id).select();
+        const { data, error } = await supabase.from('alerts').update({ 
+            status: 'RESOLVED',
+            resolved: true 
+        }).eq('id', id).select();
         if (error) throw new Error(error.message);
         return NextResponse.json(data);
     } catch (e: unknown) {
