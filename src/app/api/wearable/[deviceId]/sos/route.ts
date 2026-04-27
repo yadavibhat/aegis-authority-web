@@ -1,16 +1,17 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseServiceRole } from '@/lib/supabase';
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ deviceId: string }> }) {
     try {
         const { deviceId } = await params;
-        const { data: tourist, error: tourError } = await supabase.from('tourists').select('*').eq('device_id', deviceId).single();
+        const { data: tourist, error: tourError } = await supabaseServiceRole.from('tourists').select('*').eq('device_id', deviceId).single();
         
         let targetTouristId: string;
 
         if (tourError || !tourist) {
             // Auto-fallback for demo
-            const { data: newTourists } = await supabase.from('tourists').insert({
+            const { data: newTourists } = await supabaseServiceRole.from('tourists').insert({
                 device_id: deviceId, 
                 name: 'DEMO TOURIST', 
                 active: true, 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dev
             targetTouristId = tourist.id;
         }
 
-        await supabase.from('alerts').insert({
+        await supabaseServiceRole.from('alerts').insert({
             tourist_id: targetTouristId,
             status: 'OPEN',
             type: 'PANIC',
