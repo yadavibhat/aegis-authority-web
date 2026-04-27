@@ -16,6 +16,7 @@ import {
   Lock,
   Radio
 } from 'lucide-react';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 const LiveMapDynamic = dynamic(() => import('../../components/LiveMap'), { ssr: false });
 import AddTouristView from './AddTouristView';
@@ -63,9 +64,29 @@ export default function AuthorityScreen() {
            fetchIPLocation();
        }
 
-       fetchLiveFeed();
-       const interval = setInterval(fetchLiveFeed, 5000);
-       return () => clearInterval(interval);
+        fetchLiveFeed();
+        
+        // Instant updates via Supabase Realtime
+        const alertsChannel = supabaseBrowser.channel('global-alerts')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
+                console.log("Alert change detected, refreshing feed...");
+                fetchLiveFeed();
+            })
+            .subscribe();
+
+        const locationsChannel = supabaseBrowser.channel('global-locations')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'locations' }, () => {
+                console.log("Location update detected, refreshing map...");
+                fetchLiveFeed();
+            })
+            .subscribe();
+
+        const interval = setInterval(fetchLiveFeed, 10000); // Keep polling as safety fallback but slower (10s)
+        return () => {
+            clearInterval(interval);
+            supabaseBrowser.removeChannel(alertsChannel);
+            supabaseBrowser.removeChannel(locationsChannel);
+        };
    }, []);
 
    const fetchLiveFeed = async () => {
