@@ -4,6 +4,7 @@ import L from 'leaflet';
 import React, { useEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { Radio } from 'lucide-react';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 const createTouristIcon = () => {
     return L.divIcon({
@@ -16,15 +17,15 @@ const createTouristIcon = () => {
 
 const createSOSIcon = () => {
     const iconHtml = renderToString(
-        <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center border-[3px] border-white shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-pulse">
-            <Radio className="text-white" size={14} />
+        <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center border-[3px] border-white shadow-[0_0_20px_rgba(239,68,68,0.9)] animate-panic-pulse">
+            <Radio className="text-white animate-pulse" size={18} />
         </div>
     );
     return L.divIcon({
         className: 'bg-transparent border-none',
         html: iconHtml,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
     });
 };
 
@@ -32,13 +33,35 @@ function ChangeView({ center }: { center: any }) {
     const map = useMap();
     useEffect(() => {
         if (center) {
-            map.flyTo(center, 14, { animate: true, duration: 1.5 });
+            map.flyTo(center, map.getZoom(), { animate: true, duration: 1.5 });
         }
     }, [center, map]);
     return null;
 }
 
-export default function LiveMap({ center, activeTourists, openAlerts, zones }: any) {
+export default function LiveMap({ center, activeTourists, openAlerts, zones, onPanicDetected }: any) {
+    
+    useEffect(() => {
+        // Realtime listener to trigger a global feed refresh when ANY new alert hits the grid
+        const channel = supabaseBrowser
+            .channel('live-map-alerts')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'alerts' },
+                (payload) => {
+                    const isNewPanic = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(payload.new.type);
+                    if (isNewPanic && onPanicDetected) {
+                        onPanicDetected(payload.new);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabaseBrowser.removeChannel(channel);
+        };
+    }, [onPanicDetected]);
+
     if (!center) return null;
 
     return (
@@ -49,35 +72,47 @@ export default function LiveMap({ center, activeTourists, openAlerts, zones }: a
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
             
-            {zones?.map((zone: any, i: number) => {
-                const zCenter = [center[0] + (i * 0.005) - 0.002, center[1] + (i * -0.005) + 0.002];
-                return (
-                    <Circle
-                        key={zone.id}
-                        center={zCenter as [number, number]}
-                        radius={500}
-                        pathOptions={{ color: '#10b981', fillColor: '#10b981', fillOpacity: 0.05, dashArray: '10, 10', weight: 2 }}
-                    />
-                );
-            })}
+            {zones?.map((zone: any) => (
+                <Circle
+                    key={zone.id}
+                    center={[zone.center_lat, zone.center_lng]}
+                    radius={zone.radius || 500}
+                    pathOptions={{ 
+                        color: zone.type === 'RESTRICTED' ? '#ef4444' : '#10b981', 
+                        fillColor: zone.type === 'RESTRICTED' ? '#ef4444' : '#10b981', 
+                        fillOpacity: 0.1, 
+                        dashArray: '10, 15', 
+                        weight: 2 
+                    }}
+                />
+            ))}
 
-            {activeTourists?.map((t: any, idx: number) => {
-                const hasAlert = openAlerts.some((a: any) => a.tourist_id === t.id);
-                const offsetLat = center[0] + (idx * 0.004) - 0.006;
-                const offsetLng = center[1] + (idx * 0.006) - 0.004;
+            {activeTourists?.map((t: any) => {
+                const hasAlert = openAlerts?.some((a: any) => a.tourist_id === t.id && (a.status === 'OPEN' || a.status === true));
+                const pos: [number, number] = [t.latitude || t.lat, t.longitude || t.lng];
+
+                if (!pos[0] || !pos[1]) return null;
                 
                 return (
                     <Marker 
                         key={t.id} 
-                        position={[offsetLat, offsetLng]} 
+                        position={pos} 
                         icon={hasAlert ? createSOSIcon() : createTouristIcon()}
                     >
-                        <Popup className="custom-popup">
-                             <div className="p-1 min-w-[140px]">
-                                <p className="text-slate-900 text-[11px] font-bold font-mono">{t.name}</p>
-                                <p className={hasAlert ? "text-red-500 text-[10px] font-mono mt-1" : "text-slate-500 text-[9px] font-mono mt-0.5"}>
-                                    ID: {hasAlert ? `${t.id} - ALERT ACTIVE` : t.aadhaar}
-                                </p>
+                        <Popup className="custom-popup" closeButton={false}>
+                             <div className="p-3 min-w-[160px] bg-white rounded-lg shadow-xl">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className={`w-2 h-2 rounded-full ${hasAlert ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                                    <p className="text-slate-900 text-[12px] font-black uppercase tracking-tight">{t.name}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-slate-500 text-[10px] font-mono leading-none">DEVICE: {t.device_id}</p>
+                                    {hasAlert && (
+                                        <p className="text-red-600 text-[10px] font-black uppercase tracking-widest mt-2 bg-red-50 py-1 px-2 rounded border border-red-100 flex items-center gap-2">
+                                            <Radio size={12} className="animate-pulse" /> Critical Event Active
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </Popup>
                     </Marker>

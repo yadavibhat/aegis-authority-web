@@ -7,7 +7,23 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     try {
         await checkRole();
-        const { data: alerts } = await supabase.from('alerts').select('*, tourist:tourists(*)');
+        // Specifically avoid the relational foreign key inner-join since the user's live DB may lack it
+        const { data: rawAlerts, error: alertsError } = await supabase.from('alerts').select('*').order('created_at', { ascending: false });
+        const { data: rawTourists } = await supabase.from('tourists').select('*');
+        
+        if (alertsError) {
+            console.error("Supabase Alerts Query Error:", alertsError);
+            return NextResponse.json([]);
+        }
+
+        const alerts = (rawAlerts || []).map((alert: any) => ({
+            ...alert,
+            tourist: (rawTourists || []).find((t: any) => t.id === alert.tourist_id) || {
+                name: 'UNKNOWN SUBJECT',
+                device_id: 'UNKNOWN'
+            }
+        }));
+
         if (alerts) {
             alerts.forEach((a: any) => {
                 if (a.tourist) { 

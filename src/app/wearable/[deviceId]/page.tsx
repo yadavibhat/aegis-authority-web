@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
-import { Activity, MapPin, Watch, AlertTriangle, BatteryMedium, Cpu, Globe } from 'lucide-react';
+import { Activity, MapPin, Watch, AlertTriangle, BatteryMedium, Cpu, Globe, Radio } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
 export default function WearableDeviceView() {
@@ -10,6 +10,7 @@ export default function WearableDeviceView() {
     const [alerts, setAlerts] = useState<any[]>([]);
     const [status, setStatus] = useState('Initializing Handshake...');
     const [tourist, setTourist] = useState<any>(null);
+    const [sosSent, setSosSent] = useState(false);
 
     useEffect(() => {
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
@@ -38,6 +39,43 @@ export default function WearableDeviceView() {
 
         initConnection();
     }, [deviceId]);
+
+    useEffect(() => {
+        if (!tourist) return;
+
+        // Subscribe to real-time alerts for this tourist
+        const channel = supabaseBrowser
+            .channel(`public:alerts:tourist_id=eq.${tourist.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'alerts',
+                    filter: `tourist_id=eq.${tourist.id}`
+                },
+                (payload) => {
+                    setAlerts(prev => [payload.new, ...prev]);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabaseBrowser.removeChannel(channel);
+        };
+    }, [tourist]);
+
+    const handleSos = async () => {
+        try {
+            const res = await fetch(`/api/wearable/${deviceId}/sos`, { method: 'POST' });
+            if (res.ok) {
+                setSosSent(true);
+                setTimeout(() => setSosSent(false), 5000);
+            }
+        } catch (e) {
+            console.error("SOS transmission failed", e);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-zinc-50 text-slate-900 font-sans p-10 flex flex-col">
@@ -83,6 +121,29 @@ export default function WearableDeviceView() {
                                 </div>
                             ))
                         )}
+                    </div>
+                </div>
+
+                {/* Simulated Panic Button */}
+                <div className="mt-8 bg-[#1a1a2e] rounded-xl p-8 relative overflow-hidden shadow-2xl border border-slate-800">
+                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-red-600 to-transparent animate-pulse"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="text-left w-full">
+                            <h3 className="text-white text-xs font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                                <Radio size={16} className="text-red-500 animate-pulse" /> Emergency Transmission Override
+                            </h3>
+                            <p className="text-[11px] text-slate-400 font-medium max-w-md">Simulate an immediate hardware-level crisis trigger. This will bypass standard protocols and notify all active command centers.</p>
+                        </div>
+                        <button
+                            onClick={handleSos}
+                            disabled={sosSent}
+                            className={`w-full md:w-auto px-10 rounded-lg h-16 flex items-center justify-center gap-10 text-white font-black text-xs uppercase tracking-[0.3em] transition-all duration-300 shadow-lg ${sosSent
+                                    ? 'bg-emerald-500 border border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.4)]'
+                                    : 'bg-red-600 hover:bg-red-500 border border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.3)]'
+                                }`}
+                        >
+                            {sosSent ? 'SIGNAL SENT' : 'TRIGGER SOS PANIC'}
+                        </button>
                     </div>
                 </div>
             </main>

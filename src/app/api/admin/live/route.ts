@@ -7,16 +7,43 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     try {
         await checkRole();
-        // Mock query for live data (tourists + locations + alerts + zones)
-        const { data: alerts } = await supabase.from('alerts').select('*').limit(50);
-        const { data: touristsData } = await supabase.from('tourists').select('*').limit(50);
-        const { data: zones } = await supabase.from('zones').select('*');
-        const { data: locations } = await supabase.from('locations').select('*').order('created_at', { ascending: false }).limit(200);
         
-        const tourists = touristsData?.map(maskData);
+        // 1. Fetch alerts and normalize them
+        const { data: rawAlerts } = await supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(100);
+        const alerts = (rawAlerts || []).map(a => ({
+            ...a,
+            status: a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED',
+            isPanic: ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type)
+        }));
 
-        return NextResponse.json({ alerts, tourists, locations, zones });
+        // 2. Fetch tourists and their latest locations
+        const { data: touristsData } = await supabase.from('tourists').select('*');
+        const { data: locations } = await supabase.from('locations').select('*').order('created_at', { ascending: false });
+        
+        const tourists = (touristsData || []).map(t => {
+            const latestLoc = (locations || []).find(l => l.tourist_id === t.id);
+            return maskData({
+                ...t,
+                latitude: latestLoc?.latitude || t.lat || null,
+                longitude: latestLoc?.longitude || t.lng || null,
+                hasActivePanic: alerts.some(a => a.tourist_id === t.id && a.status === 'OPEN' && a.isPanic)
+            });
+        });
+
+        // 3. Fetch zones
+        const { data: zones } = await supabase.from('zones').select('*');
+
+        return NextResponse.json({ 
+            alerts, 
+            tourists: tourists.filter(t => t.latitude && t.longitude), // Only return tourists with real coordinates
+            zones: (zones || []).map(z => ({
+                ...z,
+                center_lat: z.center_lat || 28.6149, // Fallback to New Delhi if missing
+                center_lng: z.center_lng || 77.2100
+            }))
+        });
     } catch (e: any) {
+        console.error("Live API Error:", e);
         return NextResponse.json({ error: e.message }, { status: 403 });
     }
 }

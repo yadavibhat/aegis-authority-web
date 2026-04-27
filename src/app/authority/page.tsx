@@ -230,6 +230,7 @@ export default function AuthorityScreen() {
                         activeTourists={activeTourists} 
                         openAlerts={openAlerts} 
                         zones={data?.zones} 
+                        onPanicDetected={() => fetchLiveFeed()}
                     />
                 ) : (
                     <div className="animate-pulse text-slate-500 font-mono tracking-widest uppercase">Requesting Global Positioning...</div>
@@ -291,7 +292,7 @@ export default function AuthorityScreen() {
                             </thead>
                             <tbody>
                                 {(data?.tourists || []).map((t: any) => {
-                                    const hasSOS = data?.alerts?.some((a: any) => a.tourist_id === t.id && a.type.includes('SOS') && a.status === 'OPEN');
+                                    const hasSOS = data?.alerts?.some((a: any) => a.tourist_id === t.id && ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type) && a.status === 'OPEN');
                                     let statusColor = 'text-emerald-600 bg-emerald-50 border-emerald-200';
                                     let statusText = 'ACTIVE';
                                     if (hasSOS) {
@@ -311,7 +312,7 @@ export default function AuthorityScreen() {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-8 text-slate-900 font-bold text-sm tracking-tight">{t.name}</td>
-                                            <td className="px-5 py-8 font-mono text-slate-500 text-[11px]">{t.lat?.toFixed ? t.lat.toFixed(4) : 'N/A'}, {t.lng?.toFixed ? t.lng.toFixed(4) : 'N/A'}</td>
+                                            <td className="px-5 py-8 font-mono text-slate-500 text-[11px]">{t.latitude?.toFixed ? t.latitude.toFixed(4) : 'N/A'}, {t.longitude?.toFixed ? t.longitude.toFixed(4) : 'N/A'}</td>
                                             <td className="px-5 py-8 text-right">
                                                 <button onClick={() => {setSelectedTouristId(t.id); setActiveView('tourist-detail');}} className="text-[10px] uppercase font-bold text-[#000080] hover:text-black hover:underline tracking-wider">Investigate</button>
                                             </td>
@@ -335,7 +336,6 @@ export default function AuthorityScreen() {
         {activeView === 'tourist-detail' && selectedTouristId && (
             <TouristDetailView 
                 tourist={data?.tourists?.find((t: any) => t.id === selectedTouristId)} 
-                alerts={data?.alerts || []} 
                 onBack={() => setActiveView('tourists')} 
             />
         )}
@@ -362,7 +362,7 @@ export default function AuthorityScreen() {
 
                 {openAlerts.map((alert: any) => {
                     const tourist = data?.tourists?.find((t: any) => t.id === alert.tourist_id);
-                    const isSOS = alert.type.includes('SOS');
+                    const isSOS = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(alert.type);
                     const colorClass = isSOS ? 'border-red-500 bg-red-50/30 text-red-600' : 'border-amber-500 bg-amber-50/30 text-amber-600';
 
                     return (
@@ -411,9 +411,9 @@ export default function AuthorityScreen() {
                              <div className="flex justify-between items-end border-t border-slate-100 pt-3">
                                  <div>
                                     <p className="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Telemetry</p>
-                                    <p className="font-mono text-[10px] text-slate-700">{tourist.lat?.toFixed ? tourist.lat.toFixed(4) : 'N/A'}, {tourist.lng?.toFixed ? tourist.lng.toFixed(4) : 'N/A'}</p>
+                                    <p className="font-mono text-[10px] text-slate-700">{tourist.latitude?.toFixed ? tourist.latitude.toFixed(4) : 'N/A'}, {tourist.longitude?.toFixed ? tourist.longitude.toFixed(4) : 'N/A'}</p>
                                  </div>
-                                 <button onClick={() => locationParams.loaded && setLocationParams({ loaded: true, center: [tourist.lat, tourist.lng] })} className="text-[10px] font-bold text-[#000080] hover:underline uppercase tracking-wider">Locate</button>
+                                 <button onClick={() => locationParams.loaded && setLocationParams({ loaded: true, center: [tourist.latitude, tourist.longitude] })} className="text-[10px] font-bold text-[#000080] hover:underline uppercase tracking-wider">Locate</button>
                              </div>
                         </div>
                     </div>

@@ -44,7 +44,27 @@ export default function TouristScreen() {
         };
         fetchHistory();
         const interval = setInterval(fetchHistory, 5000);
-        return () => clearInterval(interval);
+        
+        // Real-time subscription to trigger immediate refresh
+        const channel = supabaseBrowser
+            .channel('public:alerts')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'alerts'
+                },
+                () => {
+                    fetchHistory();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            clearInterval(interval);
+            supabaseBrowser.removeChannel(channel);
+        };
     }, []);
 
     const handleSos = async () => {
