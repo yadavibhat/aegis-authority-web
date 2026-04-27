@@ -18,10 +18,14 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                 .limit(100);
             
             if (!error && data) {
-                setLocalAlerts(data.map(a => ({
-                    ...a,
-                    status: a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED'
-                })));
+                setLocalAlerts(data.map(a => {
+                    const typeUpper = (a.type || '').toUpperCase();
+                    const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
+                    return {
+                        ...a,
+                        status: (a.status === null && isPanic) ? 'OPEN' : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED')
+                    };
+                }));
             }
             setLoading(false);
         };
@@ -40,9 +44,11 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                     filter: `tourist_id=eq.${tourist.id}` 
                 },
                 (payload) => {
+                    const typeUpper = (payload.new.type || '').toUpperCase();
+                    const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
                     const normalized = {
                         ...payload.new,
-                        status: payload.new.status === 'true' || payload.new.status === true || payload.new.status === 'OPEN' ? 'OPEN' : 'RESOLVED'
+                        status: (payload.new.status === null && isPanic) ? 'OPEN' : (payload.new.status === 'true' || payload.new.status === true || payload.new.status === 'OPEN' ? 'OPEN' : 'RESOLVED')
                     };
                     setLocalAlerts(prev => [normalized, ...prev]);
                 }
@@ -54,7 +60,7 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
         };
     }, [tourist?.id]);
 
-    const hasActivePanic = localAlerts.some(a => a.status === 'OPEN' && ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type));
+    const hasActivePanic = localAlerts.some(a => a.status === 'OPEN' && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()));
 
     return (
         <div className="flex-1 overflow-auto p-10 bg-slate-50 relative">
@@ -108,7 +114,7 @@ export default function TouristDetailView({ tourist, onBack }: { tourist: any, o
                             </div>
                         ) : (
                             localAlerts.map(alert => {
-                                const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(alert.type);
+                                const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((alert.type || '').toUpperCase());
                                 return (
                                     <div key={alert.id} className={`p-6 hover:bg-slate-50 transition-colors flex justify-between items-start ${alert.status === 'OPEN' ? 'bg-red-50/20' : ''}`}>
                                         <div>

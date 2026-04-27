@@ -10,11 +10,20 @@ export async function GET(req: NextRequest) {
         
         // 1. Fetch alerts and normalize them
         const { data: rawAlerts } = await supabase.from('alerts').select('*').order('created_at', { ascending: false }).limit(100);
-        const alerts = (rawAlerts || []).map(a => ({
-            ...a,
-            status: a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED',
-            isPanic: ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type)
-        }));
+        const alerts = (rawAlerts || []).map(a => {
+            const typeUpper = (a.type || '').toUpperCase();
+            const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
+            // Default to OPEN if status is missing but it's a panic/sos, otherwise check for truthy values
+            const status = (a.status === null && isPanic) 
+                ? 'OPEN' 
+                : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED');
+            
+            return {
+                ...a,
+                status,
+                isPanic
+            };
+        });
 
         // 2. Fetch tourists and their latest locations
         const { data: touristsData } = await supabase.from('tourists').select('*');

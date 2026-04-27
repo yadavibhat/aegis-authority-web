@@ -43,10 +43,12 @@ export default function TouristScreen() {
                 const data = await res.json();
                 if (res.ok && data) {
                     setHistory(data.slice(0, 10));
-                    const activePanic = data.some((a: any) => 
-                        (a.status === 'OPEN' || a.status === true || a.status === 'true') && 
-                        ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type)
-                    );
+                    const activePanic = data.some((a: any) => {
+                        const typeUpper = (a.type || '').toUpperCase();
+                        const isPanic = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes(typeUpper);
+                        const status = (a.status === null && isPanic) ? 'OPEN' : (a.status === 'true' || a.status === true || a.status === 'OPEN' ? 'OPEN' : 'RESOLVED');
+                        return status === 'OPEN' && isPanic;
+                    });
                     setHasActivePanic(activePanic);
                 }
             } catch(e) {}
@@ -291,7 +293,7 @@ export default function TouristScreen() {
                                             <div key={event.id} className="p-6 hover:bg-slate-50 transition-colors flex justify-between items-start">
                                                 <div>
                                                     <div className="flex items-center gap-3 mb-1">
-                                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border ${event.type.includes('SOS') || event.type.includes('PANIC') || event.type.includes('FALL') ? 'bg-red-50 border-red-200 text-red-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
+                                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border ${['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((event.type || '').toUpperCase()) ? 'bg-red-50 border-red-200 text-red-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
                                                             {event.type}
                                                         </span>
                                                         <span className={`text-[10px] uppercase font-bold tracking-widest ${event.status === 'OPEN' || event.status === true || event.status === 'true' ? 'text-red-500' : 'text-slate-400'}`}>

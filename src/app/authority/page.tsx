@@ -292,7 +292,7 @@ export default function AuthorityScreen() {
                             </thead>
                             <tbody>
                                 {(data?.tourists || []).map((t: any) => {
-                                    const hasSOS = data?.alerts?.some((a: any) => a.tourist_id === t.id && ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type) && a.status === 'OPEN');
+                                    const hasSOS = data?.alerts?.some((a: any) => a.tourist_id === t.id && ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((a.type || '').toUpperCase()) && a.status === 'OPEN');
                                     let statusColor = 'text-emerald-600 bg-emerald-50 border-emerald-200';
                                     let statusText = 'ACTIVE';
                                     if (hasSOS) {
@@ -362,7 +362,7 @@ export default function AuthorityScreen() {
 
                 {openAlerts.map((alert: any) => {
                     const tourist = data?.tourists?.find((t: any) => t.id === alert.tourist_id);
-                    const isSOS = ['PANIC', 'SOS', 'FALL_DETECTED'].includes(alert.type);
+                    const isSOS = ['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((alert.type || '').toUpperCase());
                     const colorClass = isSOS ? 'border-red-500 bg-red-50/30 text-red-600' : 'border-amber-500 bg-amber-50/30 text-amber-600';
 
                     return (
