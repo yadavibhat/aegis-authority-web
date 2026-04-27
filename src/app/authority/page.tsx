@@ -32,14 +32,29 @@ export default function AuthorityScreen() {
    const [activeView, setActiveView] = useState<'map' | 'tourists' | 'add-tourist' | 'settings' | 'tourist-detail'>('map');
    const [selectedTouristId, setSelectedTouristId] = useState<string | null>(null);
    const [rightPanelTab, setRightPanelTab] = useState<'alerts'|'devices'>('alerts');
+   const [lastNotification, setLastNotification] = useState<Alert | null>(null);
+   const [showNotification, setShowNotification] = useState(false);
+   const [latency, setLatency] = useState<number | null>(null);
+   const [systemStatus, setSystemStatus] = useState<'OK' | 'DEGRADED' | 'OFFLINE'>('OK');
 
     const fetchLiveFeed = async () => {
+        const start = performance.now();
         try {
             const res = await fetch('/api/admin/live');
+            const end = performance.now();
+            setLatency(Math.round(end - start));
+            
             const result: DashboardData = await res.json();
-            if (res.ok) setData(result);
+            if (res.ok) {
+                setData(result);
+                setSystemStatus('OK');
+            } else {
+                setSystemStatus('DEGRADED');
+            }
         } catch (e) {
             console.error("Error communicating with server:", e);
+            setSystemStatus('OFFLINE');
+            setLatency(null);
         } finally {
             setLoading(false);
         }
@@ -85,9 +100,24 @@ export default function AuthorityScreen() {
         }
 
         // Instant updates via Supabase Realtime
-        const alertsChannel = supabaseBrowser.channel('global-alerts')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => {
-                console.log("Alert change detected, refreshing feed...");
+         const alertsChannel = supabaseBrowser.channel('global-alerts')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' }, (payload) => {
+                const newAlert = payload.new as Alert;
+                console.log("New Alert detected:", newAlert);
+                
+                // If it's a critical alert, show pop-up notification
+                if (['PANIC', 'SOS', 'FALL_DETECTED', 'FALL'].includes((newAlert.type || '').toUpperCase())) {
+                    setLastNotification(newAlert);
+                    setShowNotification(true);
+                    
+                    // Auto-hide after 10 seconds
+                    setTimeout(() => setShowNotification(false), 10000);
+                }
+                
+                fetchLiveFeed();
+            })
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'alerts' }, () => {
+                console.log("Alert update detected, refreshing feed...");
                 fetchLiveFeed();
             })
             .subscribe();
@@ -135,7 +165,7 @@ export default function AuthorityScreen() {
             <div className="h-4 w-[1px] bg-slate-700"></div>
             <div className="flex gap-12 shrink-0">
                 <span className="text-slate-300 text-xs font-mono">NODES: {data?.locations?.length || 0}</span>
-                <span className="text-slate-300 text-xs font-mono">LATENCY: {loading ? '...' : '14ms'}</span>
+                <span className="text-slate-300 text-xs font-mono uppercase">RTT: {latency ? `${latency}ms` : '---'}</span>
             </div>
         </div>
     </div>
@@ -143,9 +173,10 @@ export default function AuthorityScreen() {
         <div className="hidden lg:block text-slate-300 font-mono text-xs font-medium tracking-wider">
             LIVE SYSTEM
         </div>
-        <div className="flex gap-1.5">
-            <button className="rounded-md w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-800 transition-colors">
+         <div className="flex gap-1.5">
+            <button onClick={() => setRightPanelTab('alerts')} className="rounded-md w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-800 transition-colors relative">
                 <Bell size={18} />
+                {openAlerts.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
             </button>
             <button onClick={() => router.push('/login')} className="rounded-md w-8 h-8 flex items-center justify-center text-slate-300 hover:bg-slate-800 transition-colors">
                 <LogOut size={18} />
@@ -172,7 +203,7 @@ export default function AuthorityScreen() {
                 <MapIcon size={18} className={activeView === 'map' ? 'text-white' : 'text-slate-600'} />
                 <span className={`text-[11px] uppercase tracking-wider font-bold ${activeView === 'map' ? 'text-white' : ''}`}>Live Map</span>
             </button>
-            <button className="w-full rounded-[6px] flex items-center justify-between px-3 h-11 text-slate-600 hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 shrink-0 group">
+             <button onClick={() => {setActiveView('map'); setRightPanelTab('alerts');}} className="w-full rounded-[6px] flex items-center justify-between px-3 h-11 text-slate-600 hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 shrink-0 group">
                 <div className="flex items-center gap-10">
                     <AlertTriangle size={18} className="group-hover:text-red-500 transition-colors" />
                     <span className="text-[11px] uppercase tracking-wider font-bold">Alerts</span>
@@ -242,7 +273,7 @@ export default function AuthorityScreen() {
         <div className="bg-white p-5 border-t-2 border-slate-300 flex flex-col justify-center shadow-md">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 truncate">System Uplink</p>
             <div className="flex items-baseline gap-2">
-                <span className="text-xl font-black text-slate-700 font-mono">OK</span>
+                <span className={`text-xl font-black font-mono ${systemStatus === 'OK' ? 'text-emerald-600' : 'text-red-600'}`}>{systemStatus}</span>
             </div>
         </div>
     </div>
@@ -453,6 +484,71 @@ export default function AuthorityScreen() {
 
 </div>
       </div>
+
+      {/* SOS POPUP NOTIFICATION */}
+      {showNotification && lastNotification && (
+          <div className="fixed bottom-10 right-10 z-[100] w-96 animate-in slide-in-from-right duration-500">
+              <div className="bg-red-600 text-white rounded-xl shadow-2xl overflow-hidden border-2 border-white/20 backdrop-blur-lg">
+                  <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                          <div className="bg-white/20 p-3 rounded-full animate-pulse">
+                              <ShieldAlert size={28} className="text-white" />
+                          </div>
+                          <div>
+                              <h3 className="text-xl font-black uppercase tracking-tighter">CRITICAL ALERT</h3>
+                              <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest font-mono">Emergency Signal Detected</p>
+                          </div>
+                      </div>
+                      
+                      <div className="bg-white/10 rounded-lg p-4 mb-6 border border-white/5">
+                          <div className="flex justify-between items-start mb-2">
+                              <div>
+                                  <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Status</p>
+                                  <p className="text-sm font-black">{lastNotification.type}</p>
+                              </div>
+                              <div className="text-right">
+                                  <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Time</p>
+                                  <p className="text-sm font-mono">{new Date(lastNotification.created_at).toLocaleTimeString()}</p>
+                              </div>
+                          </div>
+                          <div className="pt-2 border-t border-white/10">
+                               <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Personnel Name</p>
+                               <p className="text-sm font-black truncate">{data?.tourists?.find(t => t.id === lastNotification.tourist_id)?.name || 'Unknown Personnel'}</p>
+                               <p className="text-[9px] font-mono opacity-50 mt-1 uppercase">ID: {lastNotification.tourist_id}</p>
+                          </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                                handleResolveAlert(lastNotification.id);
+                                setShowNotification(false);
+                            }}
+                            className="flex-1 bg-white text-red-600 font-black py-3 rounded-lg text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors shadow-lg"
+                          >
+                              ACKNOWLEDGE & RESOLVE
+                          </button>
+                          <button 
+                            onClick={() => setShowNotification(false)}
+                            className="px-4 bg-transparent border border-white/30 text-white font-bold rounded-lg text-xs hover:bg-white/10 transition-colors"
+                          >
+                              CLOSE
+                          </button>
+                      </div>
+                  </div>
+                  <div className="h-1 bg-white/30 w-full overflow-hidden">
+                      <div className="h-full bg-white animate-[progress_10s_linear]" style={{ width: '100%' }}></div>
+                  </div>
+              </div>
+          </div>
+      )}
+      
+      <style>{`
+          @keyframes progress {
+              from { width: 100%; }
+              to { width: 0%; }
+          }
+      `}</style>
     </>
   );
 }
