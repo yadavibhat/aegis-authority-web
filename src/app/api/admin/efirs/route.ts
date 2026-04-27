@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
+export const dynamic = 'force-dynamic';
 import { checkRole } from '@/lib/auth-utils';
 
 export async function POST(req: NextRequest) {

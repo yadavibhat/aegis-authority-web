@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase as supabaseServiceRole } from '@/lib/supabase';
+export const dynamic = 'force-dynamic';
 
 // This API allows the Mobile Phone App to dynamically sync a tourist's full profile
 // and link it to a specific BLE watch device ID when they log into the app.
