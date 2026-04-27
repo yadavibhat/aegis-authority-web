@@ -137,6 +137,16 @@ export default function AuthorityScreen() {
         };
     }, []);
 
+    const isIST = (dateStr: string) => {
+        return new Date(dateStr).toLocaleTimeString('en-IN', { 
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    };
+
    const handleResolveAlert = async (id: string) => {
        await fetch(`/api/admin/alerts/${id}/resolve`, { method: 'POST' });
        fetchLiveFeed();
@@ -430,10 +440,16 @@ export default function AuthorityScreen() {
                                     {isSOS ? <ShieldAlert size={16} className="shrink-0" /> : <AlertTriangle size={16} className="shrink-0" />}
                                     <span className="font-bold text-[11px] uppercase tracking-wide truncate">{alert.type}</span>
                                 </div>
-                                <span className="font-mono text-[9px] text-slate-400 shrink-0 pt-0.5">{new Date(alert.created_at).toLocaleTimeString('en-US', {hour12: false})}</span>
+                                <span className="font-mono text-[9px] text-slate-400 shrink-0 pt-0.5">{isIST(alert.created_at)} (IST)</span>
                             </div>
                             <p className="text-[13px] font-black text-slate-900 mb-1 truncate">{tourist?.name || 'UNKNOWN'}</p>
-                            <p className="text-[10px] text-slate-500 font-mono mb-5 truncate">ID: {tourist?.aadhaar || 'MASKED'}</p>
+                            <p className="text-[10px] text-slate-500 font-mono mb-2 truncate">ID: {tourist?.aadhaar || 'MASKED'}</p>
+                            {isSOS && (
+                                <div className="bg-red-50 border border-red-100 rounded p-2 mb-3">
+                                    <p className="text-[9px] font-bold text-red-600 uppercase mb-1">Incident Location</p>
+                                    <p className="text-[11px] font-mono font-bold text-red-700">{alert.latitude.toFixed(6)}, {alert.longitude.toFixed(6)}</p>
+                                </div>
+                            )}
                             <div className="flex gap-2 mt-auto">
                                 <button onClick={() => handleResolveAlert(alert.id)} className="rounded-[6px] h-9 px-4 bg-slate-900 text-white min-w-0 flex-1 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors shadow-sm">
                                     RESOLVE
@@ -507,10 +523,19 @@ export default function AuthorityScreen() {
                                   <p className="text-sm font-black">{lastNotification.type}</p>
                               </div>
                               <div className="text-right">
-                                  <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Time</p>
-                                  <p className="text-sm font-mono">{new Date(lastNotification.created_at).toLocaleTimeString()}</p>
+                                  <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Time (IST)</p>
+                                  <p className="text-sm font-mono font-bold">{isIST(lastNotification.created_at)}</p>
                               </div>
                           </div>
+
+                          <div className="bg-white/20 rounded-lg p-3 mb-4 border border-white/10 animate-pulse">
+                               <p className="text-[10px] uppercase font-bold opacity-80 mb-1">Actual Panic Coordinates</p>
+                               <div className="flex items-center gap-2">
+                                   <Radio size={14} className="text-white" />
+                                   <p className="text-base font-mono font-black tracking-widest">{lastNotification.latitude.toFixed(6)}, {lastNotification.longitude.toFixed(6)}</p>
+                               </div>
+                          </div>
+
                           <div className="pt-2 border-t border-white/10">
                                <p className="text-[10px] uppercase font-bold opacity-70 mb-1">Personnel Name</p>
                                <p className="text-sm font-black truncate">{data?.tourists?.find(t => t.id === lastNotification.tourist_id)?.name || 'Unknown Personnel'}</p>
