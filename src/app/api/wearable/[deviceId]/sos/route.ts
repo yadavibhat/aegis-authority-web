@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dev
         await supabase.from('alerts').insert({
             tourist_id: tourist.id,
             status: 'OPEN',
-            type: 'WEARABLE MOCK SOS',
+            type: 'PANIC',
             latitude: 28.6149,
             longitude: 77.2100
         });

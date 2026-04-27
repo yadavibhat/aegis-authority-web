@@ -21,7 +21,8 @@ import {
     BatteryMedium,
     HeartPulse,
     LogOut,
-    Radio
+    Radio,
+    ShieldAlert
 } from 'lucide-react';
 
 export default function TouristScreen() {
@@ -31,6 +32,7 @@ export default function TouristScreen() {
     const [isUnlocked, setIsUnlocked] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
+    const [hasActivePanic, setHasActivePanic] = useState(false);
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -39,7 +41,14 @@ export default function TouristScreen() {
             try {
                 const res = await fetch('/api/admin/alerts');
                 const data = await res.json();
-                if (res.ok && data) setHistory(data.slice(0, 6));
+                if (res.ok && data) {
+                    setHistory(data.slice(0, 10));
+                    const activePanic = data.some((a: any) => 
+                        (a.status === 'OPEN' || a.status === true || a.status === 'true') && 
+                        ['PANIC', 'SOS', 'FALL_DETECTED'].includes(a.type)
+                    );
+                    setHasActivePanic(activePanic);
+                }
             } catch(e) {}
         };
         fetchHistory();
@@ -115,6 +124,14 @@ export default function TouristScreen() {
                     )}
                 </div>
             </header>
+            {hasActivePanic && (
+                <div className="bg-red-600 py-3 px-8 flex items-center justify-between animate-pulse z-[60] shadow-2xl border-b border-red-700">
+                    <div className="flex items-center gap-4 text-white">
+                        <ShieldAlert size={20} className="animate-bounce" />
+                        <span className="text-sm font-black uppercase tracking-[0.2em]">Critical Emergency Signal Active — Personnel Monitoring Engaged</span>
+                    </div>
+                </div>
+            )}
 
             <div className="flex flex-1 overflow-hidden">
                 {/* LEFT SIDEBAR */}
@@ -211,22 +228,23 @@ export default function TouristScreen() {
                             {history.length > 0 ? (
                             <a 
                                 href={`/wearable/${history[0].tourist?.device_id || 'AEGIS_BAND_01'}`}
-                                className="border border-emerald-500 bg-emerald-50 rounded-lg p-12 flex items-center justify-between gap-12 shadow-sm min-w-[240px] cursor-pointer hover:bg-emerald-100/50 transition-colors group"
+                                className={`border ${hasActivePanic ? 'border-red-500 bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.3)]' : 'border-emerald-500 bg-emerald-50'} rounded-lg p-12 flex items-center justify-between gap-12 shadow-sm min-w-[240px] cursor-pointer transition-all duration-500 group overflow-hidden relative`}
                                 style={{ textDecoration: 'none' }}
                                 title="Open Live Wearable Stream">
-                                <div className="flex items-center gap-12">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-200 transition-colors">
-                                        <Watch className="text-emerald-600" size={20} />
+                                {hasActivePanic && <div className="absolute inset-0 bg-red-500/10 animate-pulse"></div>}
+                                <div className="flex items-center gap-12 relative z-10">
+                                    <div className={`w-10 h-10 rounded-full ${hasActivePanic ? 'bg-white' : 'bg-emerald-100'} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                                        {hasActivePanic ? <Radio className="text-red-600 animate-pulse" size={20} /> : <Watch className="text-emerald-600" size={20} />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-emerald-700 font-black text-[11px] uppercase tracking-widest">{history[0].tourist?.device_id || 'AEGIS_BAND_01'} SYNCED</span>
+                                        <span className={`${hasActivePanic ? 'text-white' : 'text-emerald-700'} font-black text-[11px] uppercase tracking-widest`}>{history[0].tourist?.device_id || 'AEGIS_BAND_01'} {hasActivePanic ? 'SIGNALING' : 'SYNCED'}</span>
                                         <div className="flex items-center gap-1.5 mt-1">
-                                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                                            <span className="text-[10px] text-emerald-600 font-mono font-bold">ACTIVE STREAM</span>
+                                            <span className={`w-1.5 h-1.5 ${hasActivePanic ? 'bg-white' : 'bg-emerald-500'} rounded-full animate-pulse`}></span>
+                                            <span className={`text-[10px] ${hasActivePanic ? 'text-white' : 'text-emerald-600'} font-mono font-bold`}>{hasActivePanic ? 'CRITICAL SOS' : 'ACTIVE STREAM'}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs">
+                                <div className={`${hasActivePanic ? 'text-white' : 'text-emerald-600'} opacity-0 group-hover:opacity-100 transition-opacity font-bold text-xs relative z-10`}>
                                     Open ↗
                                 </div>
                             </a>
@@ -273,11 +291,11 @@ export default function TouristScreen() {
                                             <div key={event.id} className="p-6 hover:bg-slate-50 transition-colors flex justify-between items-start">
                                                 <div>
                                                     <div className="flex items-center gap-3 mb-1">
-                                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border ${event.type.includes('SOS') || event.type.includes('panic') ? 'bg-red-50 border-red-200 text-red-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
+                                                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border ${event.type.includes('SOS') || event.type.includes('PANIC') || event.type.includes('FALL') ? 'bg-red-50 border-red-200 text-red-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
                                                             {event.type}
                                                         </span>
-                                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${event.status === 'OPEN' ? 'text-red-500' : 'text-slate-400'}`}>
-                                                            [{event.status || 'LOGGED'}]
+                                                        <span className={`text-[10px] uppercase font-bold tracking-widest ${event.status === 'OPEN' || event.status === true || event.status === 'true' ? 'text-red-500' : 'text-slate-400'}`}>
+                                                            [{event.status === 'OPEN' || event.status === true || event.status === 'true' ? 'OPEN' : 'RESOLVED'}]
                                                         </span>
                                                     </div>
                                                     <p className="text-xs font-mono text-slate-500 mt-2">
